@@ -1,30 +1,30 @@
 #include <cstddef>
 #include <vector>
 
+template <typename AlleleType>
 class Gene {
-    public:
-        virtual ~Gene() = default;
-        virtual double getFitness() const = 0;
-        virtual int getAge() const;
-        virtual void updateAge();
-        virtual void mutate() = 0;
-        virtual void crossover(const Gene& other) = 0;
     protected:
+        std::vector<AlleleType> allels;
         double fitness;
         int age;
+    public:
+        virtual ~Gene() = default;
+        void calculateFitness(std::function<double(const std::vector<AlleleType>&)> fitnessFunction) {
+            fitness = fitnessFunction(allels);
+        }
+        double getFitness() const = { return fitness; }
+        int getAge() const = { return age; }
+        virtual void updateAge() { ++age; }
+        virtual void mutate() = 0;
+        virtual void crossover(const Gene& other) = 0;
 };
 
-void Gene::updateAge() {
-    age++;
-}
 
-int Gene::getAge() const {
-    return age;
-}
-
-class BitGene : public Gene {
+class BitGene : public Gene<bool> {
     public:
-        double getFitness() const override;
+        BitGene(int numAllels = 10) {
+            allels.resize(numAllels, false);
+        }
         void mutate() override;
         void crossover(const Gene& other) override;
     private:
