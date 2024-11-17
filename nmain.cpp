@@ -23,6 +23,12 @@ public:
     virtual std::pair<std::unique_ptr<Gene>, std::unique_ptr<Gene>>
         crossover(const Gene& other) const = 0;
     double getFitness() const { return fitness; }
+
+    virtual void print(std::ostream& os) const = 0;
+    friend std::ostream& operator<<(std::ostream& os, const Gene& gene) {
+        gene.print(os);
+        return os;
+    }
 };
 
 
@@ -106,6 +112,12 @@ class BitGene : public Gene {
                 }
                 return { std::move(offspring1), std::move(offspring2) };
             }
+
+    void print(std::ostream& os) const override {
+        for (bool allele : this->alleles) {
+            os << (allele ? '1' : '0');
+        }
+    }
 };
 
 
@@ -183,6 +195,15 @@ class IntGene : public Gene {
                 }
                 return { std::move(offspring1), std::move(offspring2) };
             }
+
+    void print(std::ostream& os) const override {
+        for (int i = 0; i < this->alleles.size(); i++) {
+            os << this->alleles[i];
+            if (i < this->alleles.size() - 1) {
+                os << ' ';
+            }
+        }
+    }
 };
 
 
@@ -263,7 +284,7 @@ int main(void) {
             std::cout << "Generation " << generation << ":\n";
             std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
             std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
-            //std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
         //}
     }
     return 0;
