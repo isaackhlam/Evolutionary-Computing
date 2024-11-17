@@ -35,7 +35,7 @@ class BitGene : public Gene {
         void initialize(int n) {
             std::vector<bool> alleles;
             std::uniform_int_distribution<> dis(0, 1);
-            for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++) {
                 alleles.push_back(dis(gen));
             }
             this->alleles = alleles;
@@ -109,16 +109,103 @@ class BitGene : public Gene {
 };
 
 
+class IntGene : public Gene {
+    private:
+        std::vector<int> alleles;
+        float mutationRate;
+        int minAllele;
+        int maxAllele;
+    public:
+        IntGene(int n, int minAllele, int maxAllele) { initialize(n, minAllele, maxAllele); }
+        void initialize(int n, int minAllele, int maxAllele) {
+            std::vector<int> alleles;
+            std::uniform_int_distribution<> dis(minAllele, maxAllele);
+            for (int i = 0; i < n; i++) {
+                alleles.push_back(dis(gen));
+            }
+            this->alleles = alleles;
+            this->minAllele = minAllele;
+            this->maxAllele = maxAllele;
+            this->mutationRate = 0.01;
+        }
+
+        void calculateFitness() override {
+            int fitness = 0;
+            std::for_each(this->alleles.begin(), this->alleles.end(), [&] (int n) {
+                fitness += n;
+                });
+            this->fitness = fitness;
+        }
+
+        std::unique_ptr<Gene> clone() const override {
+            auto clone = std::make_unique<IntGene>(this->alleles.size(), this->minAllele, this->maxAllele);
+            for (int i = 0; i < alleles.size(); i++) {
+                clone->setAllele(i, this->alleles[i]);
+            }
+            clone->fitness = this->fitness;
+            return clone;
+        }
+
+        void mutate() override {
+            std::uniform_real_distribution<> dis(0.0, 1.0);
+            std::uniform_int_distribution<> disI(this->minAllele, this->maxAllele);
+            for (int i = 0; i < this->alleles.size(); i++) {
+                if (dis(gen) < this->mutationRate) {
+                    this->alleles[i] = disI(gen);
+                }
+            }
+        }
+
+        void setAllele(int idx, int val) {
+            this->alleles[idx] = val;
+        }
+
+        int getAllele(int idx) const {
+            return this->alleles[idx];
+        }
+
+        std::pair<std::unique_ptr<Gene>, std::unique_ptr<Gene>>
+            crossover(const Gene& other) const override {
+                const IntGene& otherInt = dynamic_cast<const IntGene&>(other);
+                auto offspring1 = std::make_unique<IntGene>(this->alleles.size(), this->minAllele, this->maxAllele);
+                auto offspring2 = std::make_unique<IntGene>(this->alleles.size(), this->minAllele, this->maxAllele);
+                std::uniform_int_distribution<int> dis(1, this->alleles.size() - 1);
+                int r = dis(gen);
+
+                for(int i = 0; i < this->alleles.size(); i++) {
+                    if (i < r) {
+                        offspring1->setAllele(i, this->alleles[i]);
+                        offspring2->setAllele(i, otherInt.getAllele(i));
+                    } else {
+                        offspring1->setAllele(i, otherInt.getAllele(i));
+                        offspring2->setAllele(i, this->alleles[i]);
+                    }
+                }
+                return { std::move(offspring1), std::move(offspring2) };
+            }
+};
+
+
 class Population {
     private:
         std::vector<std::unique_ptr<Gene>> individuals;
         std::unique_ptr<Gene> createGene(int n) const {
             return std::make_unique<BitGene>(n);
         }
+        std::unique_ptr<Gene> createGene(int n, int minAllele, int maxAllele) const {
+            return std::make_unique<IntGene>(n, minAllele, maxAllele);
+        }
     public:
         Population(int size, int n) {
             for (int i = 0; i < size; i++) {
                 auto gene = createGene(n);
+                individuals.push_back(std::move(gene));
+            }
+        }
+
+        Population(int size, int n, int minAllele, int maxAllele) {
+            for (int i = 0; i < size; i++) {
+                auto gene = createGene(n, minAllele, maxAllele);
                 individuals.push_back(std::move(gene));
             }
         }
@@ -169,7 +256,7 @@ class Population {
 
 
 int main(void) {
-    Population pop(10, 5);
+    Population pop(10, 5, 0, 10);
     for (int generation = 0; generation < 100; generation++) {
         pop.evolve();
         //if (generation % 100 == 0) {
