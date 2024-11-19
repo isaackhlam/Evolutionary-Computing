@@ -49,7 +49,7 @@ class BitGene : public Gene {
         }
 
         void calculateFitness() override {
-            int fitness = 0;
+            double fitness = 0;
             std::for_each(this->alleles.begin(), this->alleles.end(), [&] (int n) {
                 fitness += n;
             });
@@ -142,7 +142,7 @@ class IntGene : public Gene {
         }
 
         void calculateFitness() override {
-            int fitness = 0;
+            double fitness = 0;
             std::for_each(this->alleles.begin(), this->alleles.end(), [&] (int n) {
                 fitness += n;
                 });
@@ -207,14 +207,107 @@ class IntGene : public Gene {
 };
 
 
+class RealGene : public Gene {
+    private:
+        std::vector<double> alleles;
+        float mutationRate;
+        double minAllele;
+        double maxAllele;
+        double lowerMutationValue;
+        double upperMutationValue;
+    public:
+        RealGene(int n, double minAllele, double maxAllele) { initialize(n, minAllele, maxAllele); }
+        void initialize(int n, double minAllele, double maxAllele, double lowerMutationValue = -1.0, double upperMutationValue = 1.0) {
+            std::vector<double> alleles;
+            std::uniform_real_distribution<> dis(minAllele, maxAllele);
+            for (int i = 0; i < n; i++) {
+                alleles.push_back(dis(gen));
+            }
+            this->alleles = alleles;
+            this->minAllele = minAllele;
+            this->maxAllele = maxAllele;
+            this->mutationRate = 0.01;
+            this->lowerMutationValue = lowerMutationValue;
+            this->upperMutationValue = upperMutationValue;
+        }
+
+        void calculateFitness() override {
+            double fitness = 0;
+            std::for_each(this->alleles.begin(), this->alleles.end(), [&] (int n) {
+                fitness += n * n;
+                });
+            this->fitness = fitness;
+        }
+
+        std::unique_ptr<Gene> clone() const override {
+            auto clone = std::make_unique<RealGene>(this->alleles.size(), this->minAllele, this->maxAllele);
+            for (int i = 0; i < alleles.size(); i++) {
+                clone->setAllele(i, this->alleles[i]);
+            }
+            clone->fitness = this->fitness;
+            return clone;
+        }
+
+        void mutate() override {
+            std::uniform_real_distribution<> dis(0.0, 1.0);
+            std::uniform_real_distribution<> disR(this->lowerMutationValue, this->upperMutationValue);
+            for (int i = 0; i < this->alleles.size(); i++) {
+                if (dis(gen) < this->mutationRate) {
+                    this->alleles[i] += disR(gen);
+                }
+            }
+        }
+
+        void setAllele(int idx, int val) {
+            this->alleles[idx] = val;
+        }
+
+        double getAllele(int idx) const {
+            return this->alleles[idx];
+        }
+
+        std::pair<std::unique_ptr<Gene>, std::unique_ptr<Gene>>
+            crossover(const Gene& other) const override {
+                const RealGene& otherReal = dynamic_cast<const RealGene&>(other);
+                auto offspring1 = std::make_unique<RealGene>(this->alleles.size(), this->minAllele, this->maxAllele);
+                auto offspring2 = std::make_unique<RealGene>(this->alleles.size(), this->minAllele, this->maxAllele);
+                std::uniform_int_distribution<int> dis(1, this->alleles.size() - 1);
+                int r = dis(gen);
+
+                for(int i = 0; i < this->alleles.size(); i++) {
+                    if (i < r) {
+                        offspring1->setAllele(i, this->alleles[i]);
+                        offspring2->setAllele(i, otherReal.getAllele(i));
+                    } else {
+                        offspring1->setAllele(i, otherReal.getAllele(i));
+                        offspring2->setAllele(i, this->alleles[i]);
+                    }
+                }
+                return { std::move(offspring1), std::move(offspring2) };
+            }
+
+    void print(std::ostream& os) const override {
+        for (int i = 0; i < this->alleles.size(); i++) {
+            os << this->alleles[i];
+            if (i < this->alleles.size() - 1) {
+                os << ' ';
+            }
+        }
+    }
+};
+
+
 class Population {
     private:
         std::vector<std::unique_ptr<Gene>> individuals;
         std::unique_ptr<Gene> createGene(int n) const {
             return std::make_unique<BitGene>(n);
         }
-        std::unique_ptr<Gene> createGene(int n, int minAllele, int maxAllele) const {
+        std::unique_ptr<Gene> createIntGene(int n, int minAllele, int maxAllele) const {
             return std::make_unique<IntGene>(n, minAllele, maxAllele);
+        }
+        std::unique_ptr<Gene> createRealGene(int n, double minAllele, double maxAllele) const {
+            return std::make_unique<RealGene>(n, minAllele, maxAllele);
         }
     public:
         Population(int size, int n) {
@@ -226,7 +319,14 @@ class Population {
 
         Population(int size, int n, int minAllele, int maxAllele) {
             for (int i = 0; i < size; i++) {
-                auto gene = createGene(n, minAllele, maxAllele);
+                auto gene = createIntGene(n, minAllele, maxAllele);
+                individuals.push_back(std::move(gene));
+            }
+        }
+
+        Population(int size, int n, double minAllele, double maxAllele) {
+            for (int i = 0; i < size; i++) {
+                auto gene = createRealGene(n, minAllele, maxAllele);
                 individuals.push_back(std::move(gene));
             }
         }
@@ -277,15 +377,24 @@ class Population {
 
 
 int main(void) {
-    Population pop(10, 5, 0, 10);
-    for (int generation = 0; generation < 100; generation++) {
+    Population pop(100, 5, 0.0, 20.0);
+    double targetFitness = 1800;
+
+    for (int generation = 0; generation < 10000; generation++) {
         pop.evolve();
-        //if (generation % 100 == 0) {
+        if (pop.getBestIndividual().getFitness() >= targetFitness) {
             std::cout << "Generation " << generation << ":\n";
             std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
             std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
             std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
-        //}
+            break;
+        }
+        if (generation % 100 == 0) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+        }
     }
     return 0;
 }
