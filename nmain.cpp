@@ -1,3 +1,4 @@
+#include <limits>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -336,11 +337,46 @@ class Population {
             return {individuals[dis(gen)].get(), individuals[dis(gen)].get()};
         }
 
+        std::pair<const Gene*, const Gene*> fitnessProportionalSelection() const {
+            double totalFitness = 0.0;
+            double leastFitness = std::numeric_limits<double>::max();
+
+            for (const auto& individual : individuals) {
+                totalFitness += individual->getFitness();
+                leastFitness = std::min(leastFitness, individual->getFitness());
+            }
+            totalFitness -= leastFitness * this->individuals.size();
+
+            std::uniform_real_distribution<> dis(0.0, totalFitness);
+            double rnd1 = dis(gen);
+            double rnd2 = dis(gen);
+
+            const Gene* parent1 = nullptr;
+            const Gene* parent2 = nullptr;
+            double accumulatedFitness = 0.0;
+            for(const auto& individual : individuals) {
+                accumulatedFitness += individual->getFitness();
+                accumulatedFitness -= leastFitness;
+                if (parent1 == nullptr && accumulatedFitness >= rnd1) {
+                    parent1 = individual.get();
+                }
+                if (parent2 == nullptr && accumulatedFitness >= rnd2) {
+                    parent2 = individual.get();
+                }
+                if (parent1 != nullptr && parent2 != nullptr) {
+                    break;
+                }
+            }
+            return {parent1, parent2};
+        }
+
+
         void evolve() {
             std::vector<std::unique_ptr<Gene>> newPopulation;
 
             while (newPopulation.size() < individuals.size()) {
-                auto [parent1, parent2] = uniformParentSelection();
+                //auto [parent1, parent2] = uniformParentSelection();
+                auto [parent1, parent2] = fitnessProportionalSelection();
                 auto [offspring1, offspring2] = parent1->crossover(*parent2);
                 offspring1->mutate();
                 offspring2->mutate();
@@ -366,6 +402,13 @@ class Population {
                         })->get();
         }
 
+        const Gene& getWorseIndividual() const {
+            return *std::min_element(individuals.begin(), individuals.end(),
+                    [](const std::unique_ptr<Gene>& a, const std::unique_ptr<Gene>& b) {
+                        return a->getFitness() < b->getFitness();
+                        })->get();
+        }
+
         double getAverageFitness() const {
             double sum = 0.0;
             for (const auto& individual : individuals) {
@@ -377,8 +420,8 @@ class Population {
 
 
 int main(void) {
-    Population pop(100, 5, 0.0, 20.0);
-    double targetFitness = 1800;
+    Population pop(100, 100, 0, 10);
+    double targetFitness = 9000;
 
     for (int generation = 0; generation < 10000; generation++) {
         pop.evolve();
