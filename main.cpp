@@ -18,6 +18,7 @@ public:
     virtual ~Gene() = default;
     virtual void calculateFitness() = 0;
     virtual void mutate() = 0;
+    virtual double calculateDistance(const Gene& other) const = 0;
     //virtual void mutate(double mutationRate) = 0;
     virtual std::unique_ptr<Gene> clone() const = 0;
 
@@ -114,6 +115,23 @@ class BitGene : public Gene {
                 return { std::move(offspring1), std::move(offspring2) };
             }
 
+        double calculateDistance(const Gene& other) const override {
+            // Jaccard Distance
+            const BitGene& otherBit = dynamic_cast<const BitGene&>(other);
+            int intersection_count = 0;
+            int union_count = 0;
+
+            for (int i = 0; i < this->alleles.size(); i++) {
+                if (this->getAllele(i) == 1 || otherBit.getAllele(i) == 1) {
+                    union_count++;
+                } else if (this->getAllele(i) == 1 && otherBit.getAllele(i) == 1) {
+                    intersection_count++;
+                }
+            }
+            double jaccard_similarity = (union_count == 0) ? 0 : double(intersection_count) / union_count;
+            return 1.0 - jaccard_similarity;
+        }
+
     void print(std::ostream& os) const override {
         for (bool allele : this->alleles) {
             os << (allele ? '1' : '0');
@@ -196,6 +214,18 @@ class IntGene : public Gene {
                 }
                 return { std::move(offspring1), std::move(offspring2) };
             }
+
+        double calculateDistance(const Gene& other) const override {
+            // Euclidean_distance
+            const IntGene& otherInt = dynamic_cast<const IntGene&>(other);
+            double sum = 0;
+
+            for (int i = 0; i < this->alleles.size(); i++) {
+                double diff = this->getAllele(i) - otherInt.getAllele(i);
+                sum += diff * diff;
+            }
+            return sum;
+        }
 
     void print(std::ostream& os) const override {
         for (int i = 0; i < this->alleles.size(); i++) {
@@ -286,6 +316,18 @@ class RealGene : public Gene {
                 }
                 return { std::move(offspring1), std::move(offspring2) };
             }
+
+        double calculateDistance(const Gene& other) const override {
+            // Euclidean_distance
+            const RealGene& otherReal = dynamic_cast<const RealGene&>(other);
+            double sum = 0;
+
+            for (int i = 0; i < this->alleles.size(); i++) {
+                double diff = this->getAllele(i) - otherReal.getAllele(i);
+                sum += diff * diff;
+            }
+            return sum;
+        }
 
     void print(std::ostream& os) const override {
         for (int i = 0; i < this->alleles.size(); i++) {
