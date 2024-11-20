@@ -451,6 +451,18 @@ class Population {
                         })->get();
         }
 
+        double calcualteDiveristy() const {
+            // pairwise distance average
+            double totalDistance = 0.0;
+            int n = individuals.size() * (individuals.size() - 1) / 2;
+            for (int i = 0; i < individuals.size(); i++) {
+                for (int j = i + 1; j < individuals.size(); j++) {
+                    totalDistance += individuals[i]->calculateDistance(*individuals[j]);
+                }
+            }
+            return totalDistance / n;
+        }
+
         double getAverageFitness() const {
             double sum = 0.0;
             for (const auto& individual : individuals) {
