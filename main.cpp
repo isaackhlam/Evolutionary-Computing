@@ -14,6 +14,7 @@ std::mt19937 gen(rd());
 class Gene {
 protected:
     double fitness;
+    double mutationRate;
 public:
     virtual ~Gene() = default;
     virtual void calculateFitness() = 0;
@@ -25,6 +26,8 @@ public:
     virtual std::pair<std::unique_ptr<Gene>, std::unique_ptr<Gene>>
         crossover(const Gene& other) const = 0;
     double getFitness() const { return fitness; }
+    void setMutationRate(double mutationRate) { this->mutationRate = mutationRate; }
+    double getMutationRate() const { return mutationRate; }
 
     virtual void print(std::ostream& os) const = 0;
     friend std::ostream& operator<<(std::ostream& os, const Gene& gene) {
@@ -37,7 +40,6 @@ public:
 class BitGene : public Gene {
     private:
         std::vector<bool> alleles;
-        float mutationRate;
     public:
         BitGene(int n) { initialize(n); }
         void initialize(int n) {
@@ -68,7 +70,7 @@ class BitGene : public Gene {
             return clone;
         }
 
-        //void mutate(double mutationRate) override {
+        //void mutate(double mutationRate)  {
             //std::uniform_real_distribution<> dis(0.0, 1.0);
             //for (int i = 0; i < this->alleles.size(); i++){
                 //if (dis(gen) < mutationRate) {
@@ -143,7 +145,6 @@ class BitGene : public Gene {
 class IntGene : public Gene {
     private:
         std::vector<int> alleles;
-        float mutationRate;
         int minAllele;
         int maxAllele;
     public:
@@ -241,7 +242,6 @@ class IntGene : public Gene {
 class RealGene : public Gene {
     private:
         std::vector<double> alleles;
-        float mutationRate;
         double minAllele;
         double maxAllele;
         double lowerMutationValue;
