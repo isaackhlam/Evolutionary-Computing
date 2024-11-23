@@ -403,29 +403,6 @@ class Population {
         }
 
 
-        void evolve() {
-            std::vector<std::unique_ptr<Gene>> newPopulation;
-
-            while (newPopulation.size() < individuals.size()) {
-                //auto [parent1, parent2] = uniformParentSelection();
-                auto [parent1, parent2] = fitnessProportionalSelection();
-                auto [offspring1, offspring2] = parent1->crossover(*parent2);
-                offspring1->mutate();
-                offspring2->mutate();
-                offspring1->calculateFitness();
-                offspring2->calculateFitness();
-                newPopulation.push_back(std::move(offspring1));
-                if(newPopulation.size() < individuals.size()) {
-                    newPopulation.push_back(std::move(offspring2));
-                }
-            }
-
-            individuals = std::move(newPopulation);
-            std::sort(individuals.begin(), individuals.end(),
-                    [](const std::unique_ptr<Gene>& a, const std::unique_ptr<Gene>& b) {
-                        return a->getFitness() > b->getFitness();
-                        });
-        }
 
         const Gene& getBestIndividual() const {
             return *std::max_element(individuals.begin(), individuals.end(),
@@ -460,6 +437,35 @@ class Population {
             }
             return sum / individuals.size();
         }
+
+        void sortPopulationWithFitness() {
+            std::sort(individuals.begin(), individuals.end(),
+                    [](const std::unique_ptr<Gene>& a, const std::unique_ptr<Gene>& b) {
+                        return a->getFitness() > b->getFitness();
+            });
+        }
+
+
+        void evolve() {
+            std::vector<std::unique_ptr<Gene>> newPopulation;
+
+            while (newPopulation.size() < individuals.size()) {
+                //auto [parent1, parent2] = uniformParentSelection();
+                auto [parent1, parent2] = fitnessProportionalSelection();
+                auto [offspring1, offspring2] = parent1->crossover(*parent2);
+                offspring1->mutate();
+                offspring2->mutate();
+                offspring1->calculateFitness();
+                offspring2->calculateFitness();
+                newPopulation.push_back(std::move(offspring1));
+                if(newPopulation.size() < individuals.size()) {
+                    newPopulation.push_back(std::move(offspring2));
+                }
+            }
+
+            individuals = std::move(newPopulation);
+        }
+
 };
 
 
