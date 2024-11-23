@@ -1,5 +1,7 @@
+#include <cmath>
 #include <limits>
 #include <memory>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 #include <random>
@@ -20,6 +22,7 @@ public:
     virtual void calculateFitness() = 0;
     virtual void mutate() = 0;
     virtual double calculateDistance(const Gene& other) const = 0;
+    virtual double cosineSimilarity(const Gene& other) const = 0;
     virtual std::unique_ptr<Gene> clone() const = 0;
 
     virtual std::pair<std::unique_ptr<Gene>, std::unique_ptr<Gene>>
@@ -126,6 +129,29 @@ class BitGene : public Gene {
             return 1.0 - jaccard_similarity;
         }
 
+        double cosineSimilarity(const Gene& other) const override {
+            const BitGene& otherBit = dynamic_cast<const BitGene&>(other);
+            double dotProduct = 0;
+            double magnitudeA = 0;
+            double magnitudeB = 0;
+
+            for (int i = 0; i < alleles.size(); i++) {
+                dotProduct += this->getAllele(i) * otherBit.getAllele(i);
+                magnitudeA += this->getAllele(i) * this->getAllele(i);
+                magnitudeB += otherBit.getAllele(i) * otherBit.getAllele(i);
+            }
+
+            magnitudeA = std::sqrt(magnitudeA);
+            magnitudeB = std::sqrt(magnitudeB);
+
+            if (magnitudeA == 0 || magnitudeB == 0) {
+                //TODO: Define a way to handle such case.
+                throw std::invalid_argument("One of the vector has zero magnitude");
+            }
+
+            return dotProduct / (magnitudeA * magnitudeB);
+        }
+
     void print(std::ostream& os) const override {
         for (bool allele : this->alleles) {
             os << (allele ? '1' : '0');
@@ -219,6 +245,29 @@ class IntGene : public Gene {
                 sum += diff * diff;
             }
             return sum;
+        }
+
+        double cosineSimilarity(const Gene& other) const override {
+            const IntGene& otherInt = dynamic_cast<const IntGene&>(other);
+            double dotProduct = 0;
+            double magnitudeA = 0;
+            double magnitudeB = 0;
+
+            for (int i = 0; i < alleles.size(); i++) {
+                dotProduct += this->getAllele(i) * otherInt.getAllele(i);
+                magnitudeA += this->getAllele(i) * this->getAllele(i);
+                magnitudeB += otherInt.getAllele(i) * otherInt.getAllele(i);
+            }
+
+            magnitudeA = std::sqrt(magnitudeA);
+            magnitudeB = std::sqrt(magnitudeB);
+
+            if (magnitudeA == 0 || magnitudeB == 0) {
+                //TODO: Define a way to handle such case.
+                throw std::invalid_argument("One of the vector has zero magnitude");
+            }
+
+            return dotProduct / (magnitudeA * magnitudeB);
         }
 
     void print(std::ostream& os) const override {
@@ -323,6 +372,29 @@ class RealGene : public Gene {
             return sum;
         }
 
+        double cosineSimilarity(const Gene& other) const override {
+            const RealGene& otherReal = dynamic_cast<const RealGene&>(other);
+            double dotProduct = 0;
+            double magnitudeA = 0;
+            double magnitudeB = 0;
+
+            for (int i = 0; i < alleles.size(); i++) {
+                dotProduct += this->getAllele(i) * otherReal.getAllele(i);
+                magnitudeA += this->getAllele(i) * this->getAllele(i);
+                magnitudeB += otherReal.getAllele(i) * otherReal.getAllele(i);
+            }
+
+            magnitudeA = std::sqrt(magnitudeA);
+            magnitudeB = std::sqrt(magnitudeB);
+
+            if (magnitudeA == 0 || magnitudeB == 0) {
+                //TODO: Define a way to handle such case.
+                throw std::invalid_argument("One of the vector has zero magnitude");
+            }
+
+            return dotProduct / (magnitudeA * magnitudeB);
+        }
+
     void print(std::ostream& os) const override {
         for (int i = 0; i < this->alleles.size(); i++) {
             os << this->alleles[i];
@@ -336,6 +408,7 @@ class RealGene : public Gene {
 
 class Population {
     private:
+        double diversity;
         std::vector<std::unique_ptr<Gene>> individuals;
         std::unique_ptr<Gene> createGene(int n) const {
             return std::make_unique<BitGene>(n);
@@ -352,6 +425,7 @@ class Population {
                 auto gene = createGene(n);
                 individuals.push_back(std::move(gene));
             }
+            diversity = calculateDiveristy();
         }
 
         Population(int size, int n, int minAllele, int maxAllele) {
@@ -359,6 +433,7 @@ class Population {
                 auto gene = createIntGene(n, minAllele, maxAllele);
                 individuals.push_back(std::move(gene));
             }
+            diversity = calculateDiveristy();
         }
 
         Population(int size, int n, double minAllele, double maxAllele) {
@@ -366,6 +441,7 @@ class Population {
                 auto gene = createRealGene(n, minAllele, maxAllele);
                 individuals.push_back(std::move(gene));
             }
+            diversity = calculateDiveristy();
         }
 
         std::pair<const Gene*, const Gene*> uniformParentSelection() const {
@@ -422,16 +498,33 @@ class Population {
                         })->get();
         }
 
-        double calcualteDiveristy() const {
+        double getDivsersity() const { return diversity; }
+
+        double calculateDiveristy() {
             // pairwise distance average
             double totalDistance = 0.0;
-            int n = individuals.size() * (individuals.size() - 1) / 2;
+            int pairs = individuals.size() * (individuals.size() - 1) / 2;
             for (int i = 0; i < individuals.size(); i++) {
                 for (int j = i + 1; j < individuals.size(); j++) {
                     totalDistance += individuals[i]->calculateDistance(*individuals[j]);
                 }
             }
-            return totalDistance / n;
+            std::cout << "Total DIstance: " << totalDistance << " N: " << pairs << "\n";
+            this->diversity = totalDistance / pairs;
+            return totalDistance / pairs;
+        }
+
+        double calculateDiveristyWithCosSim() {
+            double totalSimilarity = 0.0;
+            int pairs = individuals.size() * (individuals.size() - 1) / 2;
+            for (int i = 0; i < individuals.size(); i++) {
+                for (int j = i + 1; j < individuals.size(); j++) {
+                    totalSimilarity += individuals[i]->cosineSimilarity(*individuals[j]);
+                }
+            }
+            std::cout << "Total DIstance: " << totalSimilarity << " N: " << pairs << "\n";
+            this->diversity = totalSimilarity / pairs;
+            return totalSimilarity / pairs;
         }
 
         double getAverageFitness() const {
