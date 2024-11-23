@@ -26,6 +26,7 @@ public:
         crossover(const Gene& other) const = 0;
     double getFitness() const { return fitness; }
     void setMutationRate(double mutationRate) { this->mutationRate = mutationRate; }
+    void scaleMutationRate(double scale) { mutationRate *= scale; }
     double getMutationRate() const { return mutationRate; }
 
     virtual void print(std::ostream& os) const = 0;
@@ -448,10 +449,21 @@ class Population {
             });
         }
 
+        void setPopulationMutationRate(double mutationRate) {
+            for(auto& individual : individuals) {
+                individual->setMutationRate(mutationRate);
+            }
+        }
+
+        void scalePopulationMutationRate(double scale) {
+            for(auto& individual : individuals) {
+                individual->scaleMutationRate(scale);
+            }
+        }
+
 
         void evolve() {
             std::vector<std::unique_ptr<Gene>> newPopulation;
-
             while (newPopulation.size() < individuals.size()) {
                 //auto [parent1, parent2] = uniformParentSelection();
                 auto [parent1, parent2] = fitnessProportionalSelection();
@@ -465,15 +477,40 @@ class Population {
                     newPopulation.push_back(std::move(offspring2));
                 }
             }
-
             individuals = std::move(newPopulation);
+        }
+
+        int evolveWithSuccessMutation() {
+            std::vector<std::unique_ptr<Gene>> newPopulation;
+            int successCount = 0;
+            double fitness1;
+            double fitness2;
+            while (newPopulation.size() < individuals.size()) {
+                //auto [parent1, parent2] = uniformParentSelection();
+                auto [parent1, parent2] = fitnessProportionalSelection();
+                auto [offspring1, offspring2] = parent1->crossover(*parent2);
+                fitness1 = offspring1->getFitness();
+                fitness2 = offspring2->getFitness();
+                offspring1->mutate();
+                offspring2->mutate();
+                offspring1->calculateFitness();
+                offspring2->calculateFitness();
+                if (offspring1->getFitness() > fitness1) successCount++;
+                if (offspring2->getFitness() > fitness2) successCount++;
+                newPopulation.push_back(std::move(offspring1));
+                if(newPopulation.size() < individuals.size()) {
+                    newPopulation.push_back(std::move(offspring2));
+                }
+            }
+            individuals = std::move(newPopulation);
+            return successCount;
         }
 
 };
 
 void noAdaption() {
-    Population pop(100, 10, 0.0, 10.0);
-    double targetFitness = 9000;
+    Population pop(20, 200);
+    double targetFitness = 180;
 
     for (int generation = 0; generation < 10000; generation++) {
         pop.evolve();
@@ -493,9 +530,45 @@ void noAdaption() {
     }
 };
 
+void oneFifthSuccessRule() {
+    int populationSize = 20;
+    Population pop(populationSize, 200);
+    double targetFitness = 180;
+    double c = 0.85; // 0.817 <= c <= 1 is suggested
+    int successCount = 0;
+    int nPeriod = 20;
+
+
+    for (int generation = 0; generation < 10000; generation++) {
+        successCount += pop.evolveWithSuccessMutation();
+        if (pop.getBestIndividual().getFitness() >= targetFitness) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            break;
+        }
+        if (generation % 100 == 0) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+        }
+        if (generation && generation % nPeriod == 0) {
+            if (successCount * 5 > nPeriod * populationSize) {
+                pop.scalePopulationMutationRate(1.0 / c);
+            } else if (successCount * 5 < nPeriod * populationSize) {
+                pop.scalePopulationMutationRate(c);
+            }
+            successCount = 0;
+        }
+    }
+};
+
 
 int main(void) {
     noAdaption();
+    oneFifthSuccessRule();
     return 0;
 }
 
