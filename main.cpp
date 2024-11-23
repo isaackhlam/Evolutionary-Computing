@@ -49,6 +49,7 @@ class BitGene : public Gene {
             }
             this->alleles = alleles;
             this->mutationRate = 0.01;
+            calculateFitness();
         }
 
         void calculateFitness() override {
@@ -149,6 +150,7 @@ class IntGene : public Gene {
             this->minAllele = minAllele;
             this->maxAllele = maxAllele;
             this->mutationRate = 0.01;
+            calculateFitness();
         }
 
         void calculateFitness() override {
@@ -250,6 +252,7 @@ class RealGene : public Gene {
             this->mutationRate = 0.01;
             this->lowerMutationValue = lowerMutationValue;
             this->upperMutationValue = upperMutationValue;
+            calculateFitness();
         }
 
         void calculateFitness() override {
