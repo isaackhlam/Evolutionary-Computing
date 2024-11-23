@@ -14,16 +14,20 @@ std::mt19937 gen(rd());
 class Gene {
 protected:
     double fitness;
+    double mutationRate;
 public:
     virtual ~Gene() = default;
     virtual void calculateFitness() = 0;
     virtual void mutate() = 0;
-    //virtual void mutate(double mutationRate) = 0;
+    virtual double calculateDistance(const Gene& other) const = 0;
     virtual std::unique_ptr<Gene> clone() const = 0;
 
     virtual std::pair<std::unique_ptr<Gene>, std::unique_ptr<Gene>>
         crossover(const Gene& other) const = 0;
     double getFitness() const { return fitness; }
+    void setMutationRate(double mutationRate) { this->mutationRate = mutationRate; }
+    void scaleMutationRate(double scale) { mutationRate *= scale; }
+    double getMutationRate() const { return mutationRate; }
 
     virtual void print(std::ostream& os) const = 0;
     friend std::ostream& operator<<(std::ostream& os, const Gene& gene) {
@@ -36,7 +40,6 @@ public:
 class BitGene : public Gene {
     private:
         std::vector<bool> alleles;
-        float mutationRate;
     public:
         BitGene(int n) { initialize(n); }
         void initialize(int n) {
@@ -47,6 +50,7 @@ class BitGene : public Gene {
             }
             this->alleles = alleles;
             this->mutationRate = 0.01;
+            calculateFitness();
         }
 
         void calculateFitness() override {
@@ -66,15 +70,6 @@ class BitGene : public Gene {
 
             return clone;
         }
-
-        //void mutate(double mutationRate) override {
-            //std::uniform_real_distribution<> dis(0.0, 1.0);
-            //for (int i = 0; i < this->alleles.size(); i++){
-                //if (dis(gen) < mutationRate) {
-                    //this->alleles[i] = !this->alleles[i];
-                //}
-            //}
-        //}
 
         void mutate() override {
             std::uniform_real_distribution<> dis(0.0, 1.0);
@@ -114,6 +109,23 @@ class BitGene : public Gene {
                 return { std::move(offspring1), std::move(offspring2) };
             }
 
+        double calculateDistance(const Gene& other) const override {
+            // Jaccard Distance
+            const BitGene& otherBit = dynamic_cast<const BitGene&>(other);
+            int intersection_count = 0;
+            int union_count = 0;
+
+            for (int i = 0; i < this->alleles.size(); i++) {
+                if (this->getAllele(i) == 1 || otherBit.getAllele(i) == 1) {
+                    union_count++;
+                } else if (this->getAllele(i) == 1 && otherBit.getAllele(i) == 1) {
+                    intersection_count++;
+                }
+            }
+            double jaccard_similarity = (union_count == 0) ? 0 : double(intersection_count) / union_count;
+            return 1.0 - jaccard_similarity;
+        }
+
     void print(std::ostream& os) const override {
         for (bool allele : this->alleles) {
             os << (allele ? '1' : '0');
@@ -125,7 +137,6 @@ class BitGene : public Gene {
 class IntGene : public Gene {
     private:
         std::vector<int> alleles;
-        float mutationRate;
         int minAllele;
         int maxAllele;
     public:
@@ -140,6 +151,7 @@ class IntGene : public Gene {
             this->minAllele = minAllele;
             this->maxAllele = maxAllele;
             this->mutationRate = 0.01;
+            calculateFitness();
         }
 
         void calculateFitness() override {
@@ -197,6 +209,18 @@ class IntGene : public Gene {
                 return { std::move(offspring1), std::move(offspring2) };
             }
 
+        double calculateDistance(const Gene& other) const override {
+            // Euclidean_distance
+            const IntGene& otherInt = dynamic_cast<const IntGene&>(other);
+            double sum = 0;
+
+            for (int i = 0; i < this->alleles.size(); i++) {
+                double diff = this->getAllele(i) - otherInt.getAllele(i);
+                sum += diff * diff;
+            }
+            return sum;
+        }
+
     void print(std::ostream& os) const override {
         for (int i = 0; i < this->alleles.size(); i++) {
             os << this->alleles[i];
@@ -211,7 +235,6 @@ class IntGene : public Gene {
 class RealGene : public Gene {
     private:
         std::vector<double> alleles;
-        float mutationRate;
         double minAllele;
         double maxAllele;
         double lowerMutationValue;
@@ -230,6 +253,7 @@ class RealGene : public Gene {
             this->mutationRate = 0.01;
             this->lowerMutationValue = lowerMutationValue;
             this->upperMutationValue = upperMutationValue;
+            calculateFitness();
         }
 
         void calculateFitness() override {
@@ -286,6 +310,18 @@ class RealGene : public Gene {
                 }
                 return { std::move(offspring1), std::move(offspring2) };
             }
+
+        double calculateDistance(const Gene& other) const override {
+            // Euclidean_distance
+            const RealGene& otherReal = dynamic_cast<const RealGene&>(other);
+            double sum = 0;
+
+            for (int i = 0; i < this->alleles.size(); i++) {
+                double diff = this->getAllele(i) - otherReal.getAllele(i);
+                sum += diff * diff;
+            }
+            return sum;
+        }
 
     void print(std::ostream& os) const override {
         for (int i = 0; i < this->alleles.size(); i++) {
@@ -371,29 +407,6 @@ class Population {
         }
 
 
-        void evolve() {
-            std::vector<std::unique_ptr<Gene>> newPopulation;
-
-            while (newPopulation.size() < individuals.size()) {
-                //auto [parent1, parent2] = uniformParentSelection();
-                auto [parent1, parent2] = fitnessProportionalSelection();
-                auto [offspring1, offspring2] = parent1->crossover(*parent2);
-                offspring1->mutate();
-                offspring2->mutate();
-                offspring1->calculateFitness();
-                offspring2->calculateFitness();
-                newPopulation.push_back(std::move(offspring1));
-                if(newPopulation.size() < individuals.size()) {
-                    newPopulation.push_back(std::move(offspring2));
-                }
-            }
-
-            individuals = std::move(newPopulation);
-            std::sort(individuals.begin(), individuals.end(),
-                    [](const std::unique_ptr<Gene>& a, const std::unique_ptr<Gene>& b) {
-                        return a->getFitness() > b->getFitness();
-                        });
-        }
 
         const Gene& getBestIndividual() const {
             return *std::max_element(individuals.begin(), individuals.end(),
@@ -409,6 +422,18 @@ class Population {
                         })->get();
         }
 
+        double calcualteDiveristy() const {
+            // pairwise distance average
+            double totalDistance = 0.0;
+            int n = individuals.size() * (individuals.size() - 1) / 2;
+            for (int i = 0; i < individuals.size(); i++) {
+                for (int j = i + 1; j < individuals.size(); j++) {
+                    totalDistance += individuals[i]->calculateDistance(*individuals[j]);
+                }
+            }
+            return totalDistance / n;
+        }
+
         double getAverageFitness() const {
             double sum = 0.0;
             for (const auto& individual : individuals) {
@@ -416,12 +441,76 @@ class Population {
             }
             return sum / individuals.size();
         }
+
+        void sortPopulationWithFitness() {
+            std::sort(individuals.begin(), individuals.end(),
+                    [](const std::unique_ptr<Gene>& a, const std::unique_ptr<Gene>& b) {
+                        return a->getFitness() > b->getFitness();
+            });
+        }
+
+        void setPopulationMutationRate(double mutationRate) {
+            for(auto& individual : individuals) {
+                individual->setMutationRate(mutationRate);
+            }
+        }
+
+        void scalePopulationMutationRate(double scale) {
+            for(auto& individual : individuals) {
+                individual->scaleMutationRate(scale);
+            }
+        }
+
+
+        void evolve() {
+            std::vector<std::unique_ptr<Gene>> newPopulation;
+            while (newPopulation.size() < individuals.size()) {
+                //auto [parent1, parent2] = uniformParentSelection();
+                auto [parent1, parent2] = fitnessProportionalSelection();
+                auto [offspring1, offspring2] = parent1->crossover(*parent2);
+                offspring1->mutate();
+                offspring2->mutate();
+                offspring1->calculateFitness();
+                offspring2->calculateFitness();
+                newPopulation.push_back(std::move(offspring1));
+                if(newPopulation.size() < individuals.size()) {
+                    newPopulation.push_back(std::move(offspring2));
+                }
+            }
+            individuals = std::move(newPopulation);
+        }
+
+        int evolveWithSuccessMutation() {
+            std::vector<std::unique_ptr<Gene>> newPopulation;
+            int successCount = 0;
+            double fitness1;
+            double fitness2;
+            while (newPopulation.size() < individuals.size()) {
+                //auto [parent1, parent2] = uniformParentSelection();
+                auto [parent1, parent2] = fitnessProportionalSelection();
+                auto [offspring1, offspring2] = parent1->crossover(*parent2);
+                fitness1 = offspring1->getFitness();
+                fitness2 = offspring2->getFitness();
+                offspring1->mutate();
+                offspring2->mutate();
+                offspring1->calculateFitness();
+                offspring2->calculateFitness();
+                if (offspring1->getFitness() > fitness1) successCount++;
+                if (offspring2->getFitness() > fitness2) successCount++;
+                newPopulation.push_back(std::move(offspring1));
+                if(newPopulation.size() < individuals.size()) {
+                    newPopulation.push_back(std::move(offspring2));
+                }
+            }
+            individuals = std::move(newPopulation);
+            return successCount;
+        }
+
 };
 
-
-int main(void) {
-    Population pop(100, 100, 0, 10);
-    double targetFitness = 9000;
+void noAdaption() {
+    Population pop(20, 200);
+    double targetFitness = 180;
 
     for (int generation = 0; generation < 10000; generation++) {
         pop.evolve();
@@ -439,6 +528,47 @@ int main(void) {
             std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
         }
     }
+};
+
+void oneFifthSuccessRule() {
+    int populationSize = 20;
+    Population pop(populationSize, 200);
+    double targetFitness = 180;
+    double c = 0.85; // 0.817 <= c <= 1 is suggested
+    int successCount = 0;
+    int nPeriod = 20;
+
+
+    for (int generation = 0; generation < 10000; generation++) {
+        successCount += pop.evolveWithSuccessMutation();
+        if (pop.getBestIndividual().getFitness() >= targetFitness) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            break;
+        }
+        if (generation % 100 == 0) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+        }
+        if (generation && generation % nPeriod == 0) {
+            if (successCount * 5 > nPeriod * populationSize) {
+                pop.scalePopulationMutationRate(1.0 / c);
+            } else if (successCount * 5 < nPeriod * populationSize) {
+                pop.scalePopulationMutationRate(c);
+            }
+            successCount = 0;
+        }
+    }
+};
+
+
+int main(void) {
+    noAdaption();
+    oneFifthSuccessRule();
     return 0;
 }
 
