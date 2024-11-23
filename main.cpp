@@ -471,9 +471,8 @@ class Population {
 
 };
 
-
-int main(void) {
-    Population pop(100, 100, 0, 10);
+void noAdaption() {
+    Population pop(100, 10, 0.0, 10.0);
     double targetFitness = 9000;
 
     for (int generation = 0; generation < 10000; generation++) {
@@ -492,6 +491,11 @@ int main(void) {
             std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
         }
     }
+};
+
+
+int main(void) {
+    noAdaption();
     return 0;
 }
 
