@@ -20,7 +20,6 @@ public:
     virtual void calculateFitness() = 0;
     virtual void mutate() = 0;
     virtual double calculateDistance(const Gene& other) const = 0;
-    //virtual void mutate(double mutationRate) = 0;
     virtual std::unique_ptr<Gene> clone() const = 0;
 
     virtual std::pair<std::unique_ptr<Gene>, std::unique_ptr<Gene>>
@@ -69,15 +68,6 @@ class BitGene : public Gene {
 
             return clone;
         }
-
-        //void mutate(double mutationRate)  {
-            //std::uniform_real_distribution<> dis(0.0, 1.0);
-            //for (int i = 0; i < this->alleles.size(); i++){
-                //if (dis(gen) < mutationRate) {
-                    //this->alleles[i] = !this->alleles[i];
-                //}
-            //}
-        //}
 
         void mutate() override {
             std::uniform_real_distribution<> dis(0.0, 1.0);
