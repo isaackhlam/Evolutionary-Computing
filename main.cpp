@@ -409,6 +409,7 @@ class RealGene : public Gene {
 class Population {
     private:
         double diversity;
+        double populationSimilarity;
         std::vector<std::unique_ptr<Gene>> individuals;
         std::unique_ptr<Gene> createGene(int n) const {
             return std::make_unique<BitGene>(n);
@@ -426,6 +427,7 @@ class Population {
                 individuals.push_back(std::move(gene));
             }
             diversity = calculateDiveristy();
+            populationSimilarity = calculateSimilarity();
         }
 
         Population(int size, int n, int minAllele, int maxAllele) {
@@ -434,6 +436,7 @@ class Population {
                 individuals.push_back(std::move(gene));
             }
             diversity = calculateDiveristy();
+            populationSimilarity = calculateSimilarity();
         }
 
         Population(int size, int n, double minAllele, double maxAllele) {
@@ -442,6 +445,7 @@ class Population {
                 individuals.push_back(std::move(gene));
             }
             diversity = calculateDiveristy();
+            populationSimilarity = calculateSimilarity();
         }
 
         std::pair<const Gene*, const Gene*> uniformParentSelection() const {
@@ -509,12 +513,11 @@ class Population {
                     totalDistance += individuals[i]->calculateDistance(*individuals[j]);
                 }
             }
-            std::cout << "Total DIstance: " << totalDistance << " N: " << pairs << "\n";
             this->diversity = totalDistance / pairs;
             return totalDistance / pairs;
         }
 
-        double calculateDiveristyWithCosSim() {
+        double calculateSimilarity() {
             double totalSimilarity = 0.0;
             int pairs = individuals.size() * (individuals.size() - 1) / 2;
             for (int i = 0; i < individuals.size(); i++) {
@@ -522,8 +525,7 @@ class Population {
                     totalSimilarity += individuals[i]->cosineSimilarity(*individuals[j]);
                 }
             }
-            std::cout << "Total DIstance: " << totalSimilarity << " N: " << pairs << "\n";
-            this->diversity = totalSimilarity / pairs;
+            this->populationSimilarity = totalSimilarity / pairs;
             return totalSimilarity / pairs;
         }
 
