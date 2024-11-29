@@ -408,6 +408,8 @@ class RealGene : public Gene {
 
 class Population {
     private:
+        int populationSize;
+        int offspringSize;
         double diversity;
         double populationSimilarity;
         std::vector<std::unique_ptr<Gene>> individuals;
@@ -421,29 +423,35 @@ class Population {
             return std::make_unique<RealGene>(n, minAllele, maxAllele);
         }
     public:
-        Population(int size, int n) {
+        Population(int size, int n, int offspringSize = -1) {
             for (int i = 0; i < size; i++) {
                 auto gene = createGene(n);
                 individuals.push_back(std::move(gene));
             }
+            populationSize = size;
+            this->offspringSize = offspringSize;
             diversity = calculateDiveristy();
             populationSimilarity = calculateSimilarity();
         }
 
-        Population(int size, int n, int minAllele, int maxAllele) {
+        Population(int size, int n, int minAllele, int maxAllele, int offspringSize = -1) {
             for (int i = 0; i < size; i++) {
                 auto gene = createIntGene(n, minAllele, maxAllele);
                 individuals.push_back(std::move(gene));
             }
+            populationSize = size;
+            this->offspringSize = offspringSize;
             diversity = calculateDiveristy();
             populationSimilarity = calculateSimilarity();
         }
 
-        Population(int size, int n, double minAllele, double maxAllele) {
+        Population(int size, int n, double minAllele, double maxAllele, int offspringSize = -1) {
             for (int i = 0; i < size; i++) {
                 auto gene = createRealGene(n, minAllele, maxAllele);
                 individuals.push_back(std::move(gene));
             }
+            populationSize = size;
+            this->offspringSize = offspringSize;
             diversity = calculateDiveristy();
             populationSimilarity = calculateSimilarity();
         }
@@ -556,6 +564,15 @@ class Population {
             }
         }
 
+        void selectNextPopulationWithoutReplacement() {
+            std::vector<std::unique_ptr<Gene>> newPopulation;
+            // Random Selection
+            shuffle(individuals.begin(), individuals.end(), gen);
+            for(int i = 0; i < populationSize; i++){
+                newPopulation.push_back(std::move(individuals[i]));
+            }
+            individuals = newPopulation;
+        }
 
         void evolve() {
             std::vector<std::unique_ptr<Gene>> newPopulation;
