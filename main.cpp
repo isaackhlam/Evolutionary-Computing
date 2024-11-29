@@ -1,4 +1,5 @@
 #include <cmath>
+#include <experimental/filesystem>
 #include <limits>
 #include <memory>
 #include <stdexcept>
@@ -322,6 +323,17 @@ class RealGene : public Gene {
                 sum -= 10 * cos(2 * M_PI * x);
             });
             sum += 10 * alleles.size();
+            return sum;
+        }
+
+        double RosenbrockFunction() {
+            int n = alleles.size();
+            double sum = 0;
+            double temp;
+            for(int i = 0; i < n - 1; i++) {
+                temp = 100 * std::pow(alleles[i] * alleles[i] - alleles[i + 1], 2);
+                sum += temp + std::pow(alleles[i] - 1, 2);
+            }
             return sum;
         }
 
