@@ -188,6 +188,8 @@ class IntGene : public Gene {
             this->fitness = fitness;
         }
 
+
+
         std::unique_ptr<Gene> clone() const override {
             auto clone = std::make_unique<IntGene>(this->alleles.size(), this->minAllele, this->maxAllele);
             for (int i = 0; i < alleles.size(); i++) {
@@ -307,10 +309,20 @@ class RealGene : public Gene {
 
         void calculateFitness() override {
             double fitness = 0;
-            std::for_each(this->alleles.begin(), this->alleles.end(), [&] (int n) {
+            std::for_each(this->alleles.begin(), this->alleles.end(), [&] (double n) {
                 fitness += n * n;
                 });
             this->fitness = fitness;
+        }
+
+        double RastriginFunction() {
+            double sum = 0;
+            std::for_each(alleles.begin(), alleles.end(), [&] (double x) {
+                sum += x * x;
+                sum -= 10 * cos(2 * M_PI * x);
+            });
+            sum += 10 * alleles.size();
+            return sum;
         }
 
         std::unique_ptr<Gene> clone() const override {
