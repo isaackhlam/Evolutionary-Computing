@@ -594,7 +594,7 @@ class Population {
             for(int i = 0; i < populationSize; i++){
                 newPopulation.push_back(std::move(individuals[i]));
             }
-            individuals = newPopulation;
+            individuals = std::move(newPopulation);
         }
 
         void evolve() {
@@ -644,8 +644,8 @@ class Population {
 };
 
 void noAdaption() {
-    Population pop(20, 200);
-    double targetFitness = 180;
+    Population pop(20, 50, 1.0, 10.0);
+    double targetFitness = 2000;
 
     for (int generation = 0; generation < 10000; generation++) {
         pop.evolve();
@@ -703,7 +703,7 @@ void oneFifthSuccessRule() {
 
 int main(void) {
     noAdaption();
-    oneFifthSuccessRule();
+    //oneFifthSuccessRule();
     return 0;
 }
 
