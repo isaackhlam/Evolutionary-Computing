@@ -479,6 +479,9 @@ class Population {
             populationSimilarity = calculateSimilarity();
         }
 
+        int getPopulationSize() const { return populationSize; }
+        int getOffspringSize() const { return offspringSize; }
+
         std::pair<const Gene*, const Gene*> uniformParentSelection() const {
             std::uniform_int_distribution<>dis(0, individuals.size() - 1);
             return {individuals[dis(gen)].get(), individuals[dis(gen)].get()};
@@ -643,11 +646,8 @@ class Population {
 
 };
 
-void noAdaption() {
-    Population pop(20, 50, 1.0, 10.0);
-    double targetFitness = 2000;
-
-    for (int generation = 0; generation < 10000; generation++) {
+void noAdaption(Population& pop, double targetFitness, int maxGenerations) {
+    for (int generation = 0; generation < maxGenerations; generation++) {
         pop.evolve();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
             std::cout << "Generation " << generation << ":\n";
@@ -656,7 +656,7 @@ void noAdaption() {
             std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
             break;
         }
-        if (generation % 100 == 0) {
+        if (generation % 1000 == 0) {
             std::cout << "Generation " << generation << ":\n";
             std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
             std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
@@ -665,16 +665,13 @@ void noAdaption() {
     }
 };
 
-void oneFifthSuccessRule() {
-    int populationSize = 20;
-    Population pop(populationSize, 200);
-    double targetFitness = 180;
+void oneFifthSuccessRule(Population& pop, double targetFitness, int maxGenerations) {
     double c = 0.85; // 0.817 <= c <= 1 is suggested
     int successCount = 0;
     int nPeriod = 20;
 
 
-    for (int generation = 0; generation < 10000; generation++) {
+    for (int generation = 0; generation < maxGenerations; generation++) {
         successCount += pop.evolveWithSuccessMutation();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
             std::cout << "Generation " << generation << ":\n";
@@ -683,16 +680,16 @@ void oneFifthSuccessRule() {
             std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
             break;
         }
-        if (generation % 100 == 0) {
+        if (generation % 10-0 == 0) {
             std::cout << "Generation " << generation << ":\n";
             std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
             std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
             std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
         }
         if (generation && generation % nPeriod == 0) {
-            if (successCount * 5 > nPeriod * populationSize) {
+            if (successCount * 5 > nPeriod * pop.getPopulationSize()) {
                 pop.scalePopulationMutationRate(1.0 / c);
-            } else if (successCount * 5 < nPeriod * populationSize) {
+            } else if (successCount * 5 < nPeriod * pop.getPopulationSize()) {
                 pop.scalePopulationMutationRate(c);
             }
             successCount = 0;
@@ -702,8 +699,19 @@ void oneFifthSuccessRule() {
 
 
 int main(void) {
-    noAdaption();
-    //oneFifthSuccessRule();
+    int populationSize = 100;
+    int allelesLength = 10;
+    double minAllele = 0.0;
+    double maxAllele = 10.0;
+    double targetFitness = 2000;
+    int maxGenerations = 20000;
+    Population pop(1, 1);
+
+    pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+    noAdaption(pop, targetFitness, maxGenerations);
+
+    pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+    oneFifthSuccessRule(pop, targetFitness, maxGenerations);
     return 0;
 }
 
