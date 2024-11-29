@@ -680,7 +680,7 @@ void oneFifthSuccessRule(Population& pop, double targetFitness, int maxGeneratio
             std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
             break;
         }
-        if (generation % 10-0 == 0) {
+        if (generation % 1000 == 0) {
             std::cout << "Generation " << generation << ":\n";
             std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
             std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
