@@ -722,16 +722,50 @@ void diversityControl(Population& pop, double targetFitness, int maxGenerations)
             currentDiversity = currentDiversity / nPeriod;
             if (currentDiversity > previousDiversity) {
                 pop.scalePopulationMutationRate(0.99);
-                std::cout << "Turn down!\n";
             } else if (currentDiversity < previousDiversity) {
                 pop.scalePopulationMutationRate(1.01);
-                std::cout << "Turn up!\n";
             }
             previousDiversity = currentDiversity;
             currentDiversity = 0;
         }
     }
 };
+
+void similarityControl(Population& pop, double targetFitness, int maxGenerations) {
+    double previousSimilarity = pop.calculateSimilarity();
+    double currentSimilarity = 0;
+    int nPeriod = 20;
+
+    for (int generation = 0; generation < maxGenerations; generation++) {
+        currentSimilarity += pop.evolveWithSuccessMutation();
+        if (pop.getBestIndividual().getFitness() >= targetFitness) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            break;
+        }
+        if (generation % 1000 == 0) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+        }
+        if (generation && generation % nPeriod == 0) {
+            currentSimilarity = currentSimilarity / nPeriod;
+            if (currentSimilarity > previousSimilarity) {
+                pop.scalePopulationMutationRate(0.99);
+            } else if (currentSimilarity < previousSimilarity) {
+                pop.scalePopulationMutationRate(1.01);
+            }
+            previousSimilarity = currentSimilarity;
+            currentSimilarity = 0;
+        }
+    }
+};
+
+
+
 
 
 int main(void) {
@@ -751,6 +785,9 @@ int main(void) {
 
     pop = Population(populationSize, allelesLength, minAllele, maxAllele);
     diversityControl(pop, targetFitness, maxGenerations);
+
+    pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+    similarityControl(pop, targetFitness, maxGenerations);
     return 0;
 }
 
