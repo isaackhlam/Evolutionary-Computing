@@ -765,6 +765,29 @@ void similarityControl(Population& pop, double targetFitness, int maxGenerations
 };
 
 
+void cosineAnneling(Population& pop, double targetFitness, int maxGenerations) {
+    double etaMin = 0.0;
+    double etaMax = 0.5;
+    double etaCur = etaMax;
+    for (int generation = 0; generation < maxGenerations; generation++) {
+        pop.evolve();
+        if (pop.getBestIndividual().getFitness() >= targetFitness) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            break;
+        }
+        if (generation % 1000 == 0) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+        }
+        etaCur = etaMin + (etaMax - etaMin) * ( 1 + std::cos(M_PI * generation / maxGenerations)) / 2;
+        pop.setPopulationMutationRate(etaCur);
+    }
+};
 
 
 
