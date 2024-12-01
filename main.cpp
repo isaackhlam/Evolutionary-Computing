@@ -1,5 +1,7 @@
+#include <cmath>
 #include <limits>
 #include <memory>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 #include <random>
@@ -20,6 +22,7 @@ public:
     virtual void calculateFitness() = 0;
     virtual void mutate() = 0;
     virtual double calculateDistance(const Gene& other) const = 0;
+    virtual double cosineSimilarity(const Gene& other) const = 0;
     virtual std::unique_ptr<Gene> clone() const = 0;
 
     virtual std::pair<std::unique_ptr<Gene>, std::unique_ptr<Gene>>
@@ -126,6 +129,29 @@ class BitGene : public Gene {
             return 1.0 - jaccard_similarity;
         }
 
+        double cosineSimilarity(const Gene& other) const override {
+            const BitGene& otherBit = dynamic_cast<const BitGene&>(other);
+            double dotProduct = 0;
+            double magnitudeA = 0;
+            double magnitudeB = 0;
+
+            for (int i = 0; i < alleles.size(); i++) {
+                dotProduct += this->getAllele(i) * otherBit.getAllele(i);
+                magnitudeA += this->getAllele(i) * this->getAllele(i);
+                magnitudeB += otherBit.getAllele(i) * otherBit.getAllele(i);
+            }
+
+            magnitudeA = std::sqrt(magnitudeA);
+            magnitudeB = std::sqrt(magnitudeB);
+
+            if (magnitudeA == 0 || magnitudeB == 0) {
+                //TODO: Define a way to handle such case.
+                throw std::invalid_argument("One of the vector has zero magnitude");
+            }
+
+            return dotProduct / (magnitudeA * magnitudeB);
+        }
+
     void print(std::ostream& os) const override {
         for (bool allele : this->alleles) {
             os << (allele ? '1' : '0');
@@ -161,6 +187,8 @@ class IntGene : public Gene {
                 });
             this->fitness = fitness;
         }
+
+
 
         std::unique_ptr<Gene> clone() const override {
             auto clone = std::make_unique<IntGene>(this->alleles.size(), this->minAllele, this->maxAllele);
@@ -221,6 +249,29 @@ class IntGene : public Gene {
             return sum;
         }
 
+        double cosineSimilarity(const Gene& other) const override {
+            const IntGene& otherInt = dynamic_cast<const IntGene&>(other);
+            double dotProduct = 0;
+            double magnitudeA = 0;
+            double magnitudeB = 0;
+
+            for (int i = 0; i < alleles.size(); i++) {
+                dotProduct += this->getAllele(i) * otherInt.getAllele(i);
+                magnitudeA += this->getAllele(i) * this->getAllele(i);
+                magnitudeB += otherInt.getAllele(i) * otherInt.getAllele(i);
+            }
+
+            magnitudeA = std::sqrt(magnitudeA);
+            magnitudeB = std::sqrt(magnitudeB);
+
+            if (magnitudeA == 0 || magnitudeB == 0) {
+                //TODO: Define a way to handle such case.
+                throw std::invalid_argument("One of the vector has zero magnitude");
+            }
+
+            return dotProduct / (magnitudeA * magnitudeB);
+        }
+
     void print(std::ostream& os) const override {
         for (int i = 0; i < this->alleles.size(); i++) {
             os << this->alleles[i];
@@ -258,10 +309,31 @@ class RealGene : public Gene {
 
         void calculateFitness() override {
             double fitness = 0;
-            std::for_each(this->alleles.begin(), this->alleles.end(), [&] (int n) {
+            std::for_each(this->alleles.begin(), this->alleles.end(), [&] (double n) {
                 fitness += n * n;
                 });
             this->fitness = fitness;
+        }
+
+        double RastriginFunction() {
+            double sum = 0;
+            std::for_each(alleles.begin(), alleles.end(), [&] (double x) {
+                sum += x * x;
+                sum -= 10 * cos(2 * M_PI * x);
+            });
+            sum += 10 * alleles.size();
+            return sum;
+        }
+
+        double RosenbrockFunction() {
+            int n = alleles.size();
+            double sum = 0;
+            double temp;
+            for(int i = 0; i < n - 1; i++) {
+                temp = 100 * std::pow(alleles[i] * alleles[i] - alleles[i + 1], 2);
+                sum += temp + std::pow(alleles[i] - 1, 2);
+            }
+            return sum;
         }
 
         std::unique_ptr<Gene> clone() const override {
@@ -323,6 +395,29 @@ class RealGene : public Gene {
             return sum;
         }
 
+        double cosineSimilarity(const Gene& other) const override {
+            const RealGene& otherReal = dynamic_cast<const RealGene&>(other);
+            double dotProduct = 0;
+            double magnitudeA = 0;
+            double magnitudeB = 0;
+
+            for (int i = 0; i < alleles.size(); i++) {
+                dotProduct += this->getAllele(i) * otherReal.getAllele(i);
+                magnitudeA += this->getAllele(i) * this->getAllele(i);
+                magnitudeB += otherReal.getAllele(i) * otherReal.getAllele(i);
+            }
+
+            magnitudeA = std::sqrt(magnitudeA);
+            magnitudeB = std::sqrt(magnitudeB);
+
+            if (magnitudeA == 0 || magnitudeB == 0) {
+                //TODO: Define a way to handle such case.
+                throw std::invalid_argument("One of the vector has zero magnitude");
+            }
+
+            return dotProduct / (magnitudeA * magnitudeB);
+        }
+
     void print(std::ostream& os) const override {
         for (int i = 0; i < this->alleles.size(); i++) {
             os << this->alleles[i];
@@ -336,6 +431,11 @@ class RealGene : public Gene {
 
 class Population {
     private:
+        int populationSize;
+        int offspringSize;
+        double diversity;
+        double populationSimilarity;
+        double averageFitness;
         std::vector<std::unique_ptr<Gene>> individuals;
         std::unique_ptr<Gene> createGene(int n) const {
             return std::make_unique<BitGene>(n);
@@ -347,26 +447,45 @@ class Population {
             return std::make_unique<RealGene>(n, minAllele, maxAllele);
         }
     public:
-        Population(int size, int n) {
+        Population(int size, int n, int offspringSize = -1) {
             for (int i = 0; i < size; i++) {
                 auto gene = createGene(n);
                 individuals.push_back(std::move(gene));
             }
+            populationSize = size;
+            this->offspringSize = offspringSize;
+            diversity = calculateDiveristy();
+            populationSimilarity = calculateSimilarity();
+            averageFitness = calculateAverageFitness();
         }
 
-        Population(int size, int n, int minAllele, int maxAllele) {
+        Population(int size, int n, int minAllele, int maxAllele, int offspringSize = -1) {
             for (int i = 0; i < size; i++) {
                 auto gene = createIntGene(n, minAllele, maxAllele);
                 individuals.push_back(std::move(gene));
             }
+            populationSize = size;
+            this->offspringSize = offspringSize;
+            diversity = calculateDiveristy();
+            populationSimilarity = calculateSimilarity();
+            averageFitness = calculateAverageFitness();
         }
 
-        Population(int size, int n, double minAllele, double maxAllele) {
+        Population(int size, int n, double minAllele, double maxAllele, int offspringSize = -1) {
             for (int i = 0; i < size; i++) {
                 auto gene = createRealGene(n, minAllele, maxAllele);
                 individuals.push_back(std::move(gene));
             }
+            populationSize = size;
+            this->offspringSize = offspringSize;
+            diversity = calculateDiveristy();
+            populationSimilarity = calculateSimilarity();
+            averageFitness = calculateAverageFitness();
         }
+
+        int getPopulationSize() const { return populationSize; }
+        int getOffspringSize() const { return offspringSize; }
+        double getAverageFitness() const { return averageFitness; }
 
         std::pair<const Gene*, const Gene*> uniformParentSelection() const {
             std::uniform_int_distribution<>dis(0, individuals.size() - 1);
@@ -422,25 +541,41 @@ class Population {
                         })->get();
         }
 
-        double calcualteDiveristy() const {
+        double getDivsersity() const { return diversity; }
+
+        double calculateDiveristy() {
             // pairwise distance average
             double totalDistance = 0.0;
-            int n = individuals.size() * (individuals.size() - 1) / 2;
+            int pairs = individuals.size() * (individuals.size() - 1) / 2;
             for (int i = 0; i < individuals.size(); i++) {
                 for (int j = i + 1; j < individuals.size(); j++) {
                     totalDistance += individuals[i]->calculateDistance(*individuals[j]);
                 }
             }
-            return totalDistance / n;
+            this->diversity = totalDistance / pairs;
+            return totalDistance / pairs;
         }
 
-        double getAverageFitness() const {
+        double calculateSimilarity() {
+            double totalSimilarity = 0.0;
+            int pairs = individuals.size() * (individuals.size() - 1) / 2;
+            for (int i = 0; i < individuals.size(); i++) {
+                for (int j = i + 1; j < individuals.size(); j++) {
+                    totalSimilarity += individuals[i]->cosineSimilarity(*individuals[j]);
+                }
+            }
+            this->populationSimilarity = totalSimilarity / pairs;
+            return totalSimilarity / pairs;
+        }
+
+        double calculateAverageFitness() {
             double sum = 0.0;
             for (const auto& individual : individuals) {
                 sum += individual->getFitness();
             }
             return sum / individuals.size();
         }
+
 
         void sortPopulationWithFitness() {
             std::sort(individuals.begin(), individuals.end(),
@@ -461,6 +596,15 @@ class Population {
             }
         }
 
+        void selectNextPopulationWithoutReplacement() {
+            std::vector<std::unique_ptr<Gene>> newPopulation;
+            // Random Selection
+            shuffle(individuals.begin(), individuals.end(), gen);
+            for(int i = 0; i < populationSize; i++){
+                newPopulation.push_back(std::move(individuals[i]));
+            }
+            individuals = std::move(newPopulation);
+        }
 
         void evolve() {
             std::vector<std::unique_ptr<Gene>> newPopulation;
@@ -508,11 +652,8 @@ class Population {
 
 };
 
-void noAdaption() {
-    Population pop(20, 200);
-    double targetFitness = 180;
-
-    for (int generation = 0; generation < 10000; generation++) {
+void noAdaption(Population& pop, double targetFitness, int maxGenerations) {
+    for (int generation = 0; generation < maxGenerations; generation++) {
         pop.evolve();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
             std::cout << "Generation " << generation << ":\n";
@@ -521,7 +662,7 @@ void noAdaption() {
             std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
             break;
         }
-        if (generation % 100 == 0) {
+        if (generation % 1000 == 0) {
             std::cout << "Generation " << generation << ":\n";
             std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
             std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
@@ -530,16 +671,13 @@ void noAdaption() {
     }
 };
 
-void oneFifthSuccessRule() {
-    int populationSize = 20;
-    Population pop(populationSize, 200);
-    double targetFitness = 180;
+void oneFifthSuccessRule(Population& pop, double targetFitness, int maxGenerations) {
     double c = 0.85; // 0.817 <= c <= 1 is suggested
     int successCount = 0;
     int nPeriod = 20;
 
 
-    for (int generation = 0; generation < 10000; generation++) {
+    for (int generation = 0; generation < maxGenerations; generation++) {
         successCount += pop.evolveWithSuccessMutation();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
             std::cout << "Generation " << generation << ":\n";
@@ -548,16 +686,16 @@ void oneFifthSuccessRule() {
             std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
             break;
         }
-        if (generation % 100 == 0) {
+        if (generation % 1000 == 0) {
             std::cout << "Generation " << generation << ":\n";
             std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
             std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
             std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
         }
         if (generation && generation % nPeriod == 0) {
-            if (successCount * 5 > nPeriod * populationSize) {
+            if (successCount * 5 > nPeriod * pop.getPopulationSize()) {
                 pop.scalePopulationMutationRate(1.0 / c);
-            } else if (successCount * 5 < nPeriod * populationSize) {
+            } else if (successCount * 5 < nPeriod * pop.getPopulationSize()) {
                 pop.scalePopulationMutationRate(c);
             }
             successCount = 0;
@@ -566,9 +704,155 @@ void oneFifthSuccessRule() {
 };
 
 
+void diversityControl(Population& pop, double targetFitness, int maxGenerations) {
+    double previousDiversity = pop.calculateDiveristy();
+    double currentDiversity = 0;
+    int nPeriod = 20;
+
+    for (int generation = 0; generation < maxGenerations; generation++) {
+        currentDiversity += pop.evolveWithSuccessMutation();
+        if (pop.getBestIndividual().getFitness() >= targetFitness) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            break;
+        }
+        if (generation % 1000 == 0) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+        }
+        if (generation && generation % nPeriod == 0) {
+            currentDiversity = currentDiversity / nPeriod;
+            if (currentDiversity > previousDiversity) {
+                pop.scalePopulationMutationRate(0.99);
+            } else if (currentDiversity < previousDiversity) {
+                pop.scalePopulationMutationRate(1.01);
+            }
+            previousDiversity = currentDiversity;
+            currentDiversity = 0;
+        }
+    }
+};
+
+void similarityControl(Population& pop, double targetFitness, int maxGenerations) {
+    double previousSimilarity = pop.calculateSimilarity();
+    double currentSimilarity = 0;
+    int nPeriod = 20;
+
+    for (int generation = 0; generation < maxGenerations; generation++) {
+        currentSimilarity += pop.evolveWithSuccessMutation();
+        if (pop.getBestIndividual().getFitness() >= targetFitness) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            break;
+        }
+        if (generation % 1000 == 0) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+        }
+        if (generation && generation % nPeriod == 0) {
+            currentSimilarity = currentSimilarity / nPeriod;
+            if (currentSimilarity > previousSimilarity) {
+                pop.scalePopulationMutationRate(0.99);
+            } else if (currentSimilarity < previousSimilarity) {
+                pop.scalePopulationMutationRate(1.01);
+            }
+            previousSimilarity = currentSimilarity;
+            currentSimilarity = 0;
+        }
+    }
+};
+
+
+void cosineAnneling(Population& pop, double targetFitness, int maxGenerations) {
+    double etaMin = 0.0;
+    double etaMax = 0.5;
+    double etaCur = etaMax;
+    for (int generation = 0; generation < maxGenerations; generation++) {
+        pop.evolve();
+        if (pop.getBestIndividual().getFitness() >= targetFitness) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            break;
+        }
+        if (generation % 1000 == 0) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+        }
+        etaCur = etaMin + (etaMax - etaMin) * ( 1 + std::cos(M_PI * generation / maxGenerations)) / 2;
+        pop.setPopulationMutationRate(etaCur);
+    }
+};
+
+
+void averageFitness(Population& pop, double targetFitness, int maxGenerations) {
+    double c = 0.85; // 0.817 <= c <= 1 is suggested
+    double previousAverageFitness = pop.getAverageFitness();
+    double currentAverageFitness = 0;
+    int nPeriod = 20;
+
+    for (int generation = 0; generation < maxGenerations; generation++) {
+        pop.evolve();
+        currentAverageFitness += pop.getAverageFitness();
+        if (pop.getBestIndividual().getFitness() >= targetFitness) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            break;
+        }
+        if (generation % 1000 == 0) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+        }
+        if (generation && generation % nPeriod == 0) {
+            currentAverageFitness /= nPeriod;
+            if (currentAverageFitness > previousAverageFitness) {
+                pop.scalePopulationMutationRate(1 / c);
+            } else if (currentAverageFitness < previousAverageFitness) {
+                pop.scalePopulationMutationRate(c);
+            }
+            previousAverageFitness = currentAverageFitness;
+            currentAverageFitness = 0;
+        }
+    }
+};
+
+
+
 int main(void) {
-    noAdaption();
-    oneFifthSuccessRule();
+    int populationSize = 100;
+    int allelesLength = 10;
+    double minAllele = 0.0;
+    double maxAllele = 10.0;
+    double targetFitness = 800;
+    int maxGenerations = 20000;
+    Population pop(1, 1);
+
+    pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+    noAdaption(pop, targetFitness, maxGenerations);
+
+    pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+    oneFifthSuccessRule(pop, targetFitness, maxGenerations);
+
+    pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+    diversityControl(pop, targetFitness, maxGenerations);
+
+    pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+    similarityControl(pop, targetFitness, maxGenerations);
     return 0;
 }
 
