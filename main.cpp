@@ -796,6 +796,40 @@ void cosineAnneling(Population& pop, double targetFitness, int maxGenerations) {
 };
 
 
+void averageFitness(Population& pop, double targetFitness, int maxGenerations) {
+    double c = 0.85; // 0.817 <= c <= 1 is suggested
+    double previousAverageFitness = pop.getAverageFitness();
+    double currentAverageFitness = 0;
+    int nPeriod = 20;
+
+    for (int generation = 0; generation < maxGenerations; generation++) {
+        pop.evolve();
+        currentAverageFitness += pop.getAverageFitness();
+        if (pop.getBestIndividual().getFitness() >= targetFitness) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            break;
+        }
+        if (generation % 1000 == 0) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+        }
+        if (generation && generation % nPeriod == 0) {
+            currentAverageFitness /= nPeriod;
+            if (currentAverageFitness > previousAverageFitness) {
+                pop.scalePopulationMutationRate(1 / c);
+            } else if (currentAverageFitness < previousAverageFitness) {
+                pop.scalePopulationMutationRate(c);
+            }
+            previousAverageFitness = currentAverageFitness;
+            currentAverageFitness = 0;
+        }
+    }
+};
 
 
 
