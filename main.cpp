@@ -435,6 +435,7 @@ class Population {
         int offspringSize;
         double diversity;
         double populationSimilarity;
+        double averageFitness;
         std::vector<std::unique_ptr<Gene>> individuals;
         std::unique_ptr<Gene> createGene(int n) const {
             return std::make_unique<BitGene>(n);
@@ -455,6 +456,7 @@ class Population {
             this->offspringSize = offspringSize;
             diversity = calculateDiveristy();
             populationSimilarity = calculateSimilarity();
+            averageFitness = calculateAverageFitness();
         }
 
         Population(int size, int n, int minAllele, int maxAllele, int offspringSize = -1) {
@@ -466,6 +468,7 @@ class Population {
             this->offspringSize = offspringSize;
             diversity = calculateDiveristy();
             populationSimilarity = calculateSimilarity();
+            averageFitness = calculateAverageFitness();
         }
 
         Population(int size, int n, double minAllele, double maxAllele, int offspringSize = -1) {
@@ -477,10 +480,12 @@ class Population {
             this->offspringSize = offspringSize;
             diversity = calculateDiveristy();
             populationSimilarity = calculateSimilarity();
+            averageFitness = calculateAverageFitness();
         }
 
         int getPopulationSize() const { return populationSize; }
         int getOffspringSize() const { return offspringSize; }
+        double getAverageFitness() const { return averageFitness; }
 
         std::pair<const Gene*, const Gene*> uniformParentSelection() const {
             std::uniform_int_distribution<>dis(0, individuals.size() - 1);
@@ -563,13 +568,14 @@ class Population {
             return totalSimilarity / pairs;
         }
 
-        double getAverageFitness() const {
+        double calculateAverageFitness() {
             double sum = 0.0;
             for (const auto& individual : individuals) {
                 sum += individual->getFitness();
             }
             return sum / individuals.size();
         }
+
 
         void sortPopulationWithFitness() {
             std::sort(individuals.begin(), individuals.end(),
@@ -788,6 +794,8 @@ void cosineAnneling(Population& pop, double targetFitness, int maxGenerations) {
         pop.setPopulationMutationRate(etaCur);
     }
 };
+
+
 
 
 
