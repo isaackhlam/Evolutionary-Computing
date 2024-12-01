@@ -698,12 +698,48 @@ void oneFifthSuccessRule(Population& pop, double targetFitness, int maxGeneratio
 };
 
 
+void diversityControl(Population& pop, double targetFitness, int maxGenerations) {
+    double previousDiversity = pop.calculateDiveristy();
+    double currentDiversity = 0;
+    int nPeriod = 20;
+
+    for (int generation = 0; generation < maxGenerations; generation++) {
+        currentDiversity += pop.evolveWithSuccessMutation();
+        if (pop.getBestIndividual().getFitness() >= targetFitness) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            break;
+        }
+        if (generation % 1000 == 0) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+        }
+        if (generation && generation % nPeriod == 0) {
+            currentDiversity = currentDiversity / nPeriod;
+            if (currentDiversity > previousDiversity) {
+                pop.scalePopulationMutationRate(0.99);
+                std::cout << "Turn down!\n";
+            } else if (currentDiversity < previousDiversity) {
+                pop.scalePopulationMutationRate(1.01);
+                std::cout << "Turn up!\n";
+            }
+            previousDiversity = currentDiversity;
+            currentDiversity = 0;
+        }
+    }
+};
+
+
 int main(void) {
     int populationSize = 100;
     int allelesLength = 10;
     double minAllele = 0.0;
     double maxAllele = 10.0;
-    double targetFitness = 2000;
+    double targetFitness = 800;
     int maxGenerations = 20000;
     Population pop(1, 1);
 
@@ -712,6 +748,9 @@ int main(void) {
 
     pop = Population(populationSize, allelesLength, minAllele, maxAllele);
     oneFifthSuccessRule(pop, targetFitness, maxGenerations);
+
+    pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+    diversityControl(pop, targetFitness, maxGenerations);
     return 0;
 }
 
