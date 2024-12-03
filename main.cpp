@@ -365,7 +365,7 @@ class RealGene : public Gene {
             }
         }
 
-        void setAllele(int idx, int val) {
+        void setAllele(int idx, double val) {
             this->alleles[idx] = val;
         }
 
