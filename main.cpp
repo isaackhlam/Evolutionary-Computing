@@ -49,21 +49,27 @@ class BitGene : public Gene {
         void initialize(int n) {
             std::vector<bool> alleles;
             std::uniform_int_distribution<> dis(0, 1);
-    for (int i = 0; i < n; i++) {
-                alleles.push_back(dis(gen));
-            }
-            this->alleles = alleles;
-            this->mutationRate = 0.01;
-            calculateFitness();
+            for (int i = 0; i < n; i++) {
+                        alleles.push_back(dis(gen));
+                    }
+                    this->alleles = alleles;
+                    this->mutationRate = 0.01;
+                    calculateFitness();
         }
 
         void calculateFitness() override {
-            double fitness = 0;
-            std::for_each(this->alleles.begin(), this->alleles.end(), [&] (int n) {
-                fitness += n;
-            });
-            this->fitness = fitness;
+            fitness = oneMaxFunction();
         }
+
+        double oneMaxFunction() {
+            double sum = 0;
+            std::for_each(this->alleles.begin(), this->alleles.end(), [&] (double n) {
+                sum += n;
+            });
+            return sum;
+        }
+
+
 
         std::unique_ptr<Gene> clone() const override {
             auto clone = std::make_unique<BitGene>(this->alleles.size());
@@ -182,13 +188,16 @@ class IntGene : public Gene {
         }
 
         void calculateFitness() override {
-            double fitness = 0;
-            std::for_each(this->alleles.begin(), this->alleles.end(), [&] (int n) {
-                fitness += n;
-                });
-            this->fitness = fitness;
+            fitness = sphereFunction();
         }
 
+        double sphereFunction() {
+            double sum = 0;
+            std::for_each(this->alleles.begin(), this->alleles.end(), [&] (double n) {
+                sum += n * n;
+            });
+            return sum;
+        }
 
 
         std::unique_ptr<Gene> clone() const override {
@@ -309,11 +318,15 @@ class RealGene : public Gene {
         }
 
         void calculateFitness() override {
-            double fitness = 0;
+            fitness = sphereFunction();
+        }
+
+        double sphereFunction() {
+            double sum = 0;
             std::for_each(this->alleles.begin(), this->alleles.end(), [&] (double n) {
-                fitness += n * n;
-                });
-            this->fitness = fitness;
+                sum += n * n;
+            });
+            return sum;
         }
 
         double RastriginFunction() {
