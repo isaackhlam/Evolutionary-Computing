@@ -509,7 +509,10 @@ class Population {
         }
 
         std::pair<const Gene*, const Gene*> fitnessProportionalSelection() const {
-            std::uniform_real_distribution<> dis(0.0, totalFitness - minFitness * populationSize);
+            //TODO: Dunno why this won't work for subtract the fitness
+            //      This is working well for int type gene...
+            //std::uniform_real_distribution<> dis(0.0, totalFitness - minFitness * populationSize);
+            std::uniform_real_distribution<> dis(0.0, totalFitness);
             double rnd1 = dis(gen);
             double rnd2 = dis(gen);
 
@@ -518,7 +521,9 @@ class Population {
             double accumulatedFitness = 0.0;
             for(const auto& individual : individuals) {
                 accumulatedFitness += individual->getFitness();
-                accumulatedFitness -= minFitness;
+                //TODO: Fix this later....
+                //      It return nullptr for parent...
+                //accumulatedFitness -= minFitness;
                 if (parent1 == nullptr && accumulatedFitness >= rnd1) {
                     parent1 = individual.get();
                 }
