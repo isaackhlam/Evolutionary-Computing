@@ -69,8 +69,6 @@ class BitGene : public Gene {
             return sum;
         }
 
-
-
         std::unique_ptr<Gene> clone() const override {
             auto clone = std::make_unique<BitGene>(this->alleles.size());
             for (int i = 0; i < alleles.size(); i++) {
@@ -199,7 +197,6 @@ class IntGene : public Gene {
             return sum;
         }
 
-
         std::unique_ptr<Gene> clone() const override {
             auto clone = std::make_unique<IntGene>(this->alleles.size(), this->minAllele, this->maxAllele);
             for (int i = 0; i < alleles.size(); i++) {
@@ -278,7 +275,6 @@ class IntGene : public Gene {
                 //TODO: Define a way to handle such case.
                 throw std::invalid_argument("One of the vector has zero magnitude");
             }
-
             return dotProduct / (magnitudeA * magnitudeB);
         }
 
@@ -428,7 +424,6 @@ class RealGene : public Gene {
                 //TODO: Define a way to handle such case.
                 throw std::invalid_argument("One of the vector has zero magnitude");
             }
-
             return dotProduct / (magnitudeA * magnitudeB);
         }
 
@@ -532,8 +527,6 @@ class Population {
             }
             return {parent1, parent2};
         }
-
-
 
         const Gene& getBestIndividual() const {
             return *std::max_element(individuals.begin(), individuals.end(),
@@ -697,7 +690,6 @@ class Population {
             selectNextPopulationWithoutReplacement();
             calculatePopulationFitnessMetrics();
         }
-
 };
 
 void noAdaption(Population& pop, double targetFitness, int maxGenerations) {
@@ -723,7 +715,6 @@ void oneFifthSuccessRule(Population& pop, double targetFitness, int maxGeneratio
     double c = 0.85; // 0.817 <= c <= 1 is suggested
     int successCount = 0;
     int nPeriod = 20;
-
 
     for (int generation = 0; generation < maxGenerations; generation++) {
         successCount += pop.evolveWithSuccessMutation();
@@ -818,7 +809,6 @@ void similarityControl(Population& pop, double targetFitness, int maxGenerations
     }
 };
 
-
 void cosineAnneling(Population& pop, double targetFitness, int maxGenerations) {
     double etaMin = 0.0;
     double etaMax = 0.5;
@@ -842,7 +832,6 @@ void cosineAnneling(Population& pop, double targetFitness, int maxGenerations) {
         pop.setPopulationMutationRate(etaCur);
     }
 };
-
 
 void averageFitness(Population& pop, double targetFitness, int maxGenerations) {
     double c = 0.85; // 0.817 <= c <= 1 is suggested
@@ -879,7 +868,6 @@ void averageFitness(Population& pop, double targetFitness, int maxGenerations) {
     }
 };
 
-
 void matingDistance(Population& pop, double targetFitness, int maxGenerations) {
     for (int generation = 0; generation < maxGenerations; generation++) {
         pop.evolveWithMatingDistance();
@@ -898,8 +886,6 @@ void matingDistance(Population& pop, double targetFitness, int maxGenerations) {
         }
     }
 };
-
-
 
 int main(void) {
     int populationSize = 100;
@@ -927,6 +913,4 @@ int main(void) {
 
     return 0;
 }
-
-
 
