@@ -358,9 +358,13 @@ class RealGene : public Gene {
         void mutate() override {
             std::uniform_real_distribution<> dis(0.0, 1.0);
             std::uniform_real_distribution<> disR(this->lowerMutationValue, this->upperMutationValue);
+            double temp;
             for (int i = 0; i < this->alleles.size(); i++) {
                 if (dis(gen) < this->mutationRate) {
-                    this->alleles[i] += disR(gen);
+                    temp = alleles[i] += disR(gen);
+                    temp = std::min(temp, maxAllele);
+                    temp = std::max(temp, minAllele);
+                    this->alleles[i] = temp;
                 }
             }
         }
