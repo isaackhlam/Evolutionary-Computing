@@ -437,6 +437,9 @@ class Population {
         double diversity;
         double populationSimilarity;
         double averageFitness;
+        double totalFitness;
+        double minFitness;
+        double maxFitness;
         std::vector<std::unique_ptr<Gene>> individuals;
         std::unique_ptr<Gene> createGene(int n) const {
             return std::make_unique<BitGene>(n);
@@ -457,7 +460,7 @@ class Population {
             this->offspringSize = offspringSize;
             diversity = calculateDiveristy();
             populationSimilarity = calculateSimilarity();
-            averageFitness = calculateAverageFitness();
+            calculatePopulationFitnessMetrics();
         }
 
         Population(int size, int n, int minAllele, int maxAllele, int offspringSize = -1) {
@@ -469,7 +472,7 @@ class Population {
             this->offspringSize = offspringSize;
             diversity = calculateDiveristy();
             populationSimilarity = calculateSimilarity();
-            averageFitness = calculateAverageFitness();
+            calculatePopulationFitnessMetrics();
         }
 
         Population(int size, int n, double minAllele, double maxAllele, int offspringSize = -1) {
@@ -481,7 +484,7 @@ class Population {
             this->offspringSize = offspringSize;
             diversity = calculateDiveristy();
             populationSimilarity = calculateSimilarity();
-            averageFitness = calculateAverageFitness();
+            calculatePopulationFitnessMetrics();
         }
 
         int getPopulationSize() const { return populationSize; }
@@ -494,16 +497,7 @@ class Population {
         }
 
         std::pair<const Gene*, const Gene*> fitnessProportionalSelection() const {
-            double totalFitness = 0.0;
-            double leastFitness = std::numeric_limits<double>::max();
-
-            for (const auto& individual : individuals) {
-                totalFitness += individual->getFitness();
-                leastFitness = std::min(leastFitness, individual->getFitness());
-            }
-            totalFitness -= leastFitness * this->individuals.size();
-
-            std::uniform_real_distribution<> dis(0.0, totalFitness);
+            std::uniform_real_distribution<> dis(0.0, totalFitness - minFitness * populationSize);
             double rnd1 = dis(gen);
             double rnd2 = dis(gen);
 
@@ -512,7 +506,7 @@ class Population {
             double accumulatedFitness = 0.0;
             for(const auto& individual : individuals) {
                 accumulatedFitness += individual->getFitness();
-                accumulatedFitness -= leastFitness;
+                accumulatedFitness -= minFitness;
                 if (parent1 == nullptr && accumulatedFitness >= rnd1) {
                     parent1 = individual.get();
                 }
@@ -569,14 +563,22 @@ class Population {
             return totalSimilarity / pairs;
         }
 
-        double calculateAverageFitness() {
+        void calculatePopulationFitnessMetrics() {
             double sum = 0.0;
+            double minFitness = std::numeric_limits<double>::max();
+            double maxFitness = std::numeric_limits<double>::min();
+
             for (const auto& individual : individuals) {
                 sum += individual->getFitness();
+                minFitness = std::min(minFitness, individual->getFitness());
+                maxFitness = std::max(maxFitness, individual->getFitness());
             }
-            return sum / individuals.size();
-        }
 
+            this->maxFitness = maxFitness;
+            this->minFitness = minFitness;
+            this->totalFitness = sum;
+            this->averageFitness = sum / individuals.size();
+        }
 
         void sortPopulationWithFitness() {
             std::sort(individuals.begin(), individuals.end(),
@@ -623,6 +625,7 @@ class Population {
                 }
             }
             individuals = std::move(newPopulation);
+            calculatePopulationFitnessMetrics();
         }
 
         int evolveWithSuccessMutation() {
@@ -648,6 +651,7 @@ class Population {
                 }
             }
             individuals = std::move(newPopulation);
+            calculatePopulationFitnessMetrics();
             return successCount;
         }
 
@@ -678,6 +682,7 @@ class Population {
                 std::make_move_iterator(newPopulation.end())
             );
             selectNextPopulationWithoutReplacement();
+            calculatePopulationFitnessMetrics();
         }
 
 };
