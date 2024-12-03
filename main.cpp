@@ -1,4 +1,5 @@
 #include <cmath>
+#include <iterator>
 #include <limits>
 #include <memory>
 #include <stdexcept>
@@ -650,6 +651,35 @@ class Population {
             return successCount;
         }
 
+        void evolveWithMatingDistance() {
+            std::vector<std::unique_ptr<Gene>> newPopulation;
+            int count = 0;
+            while (newPopulation.size() < individuals.size()) {
+                //auto [parent1, parent2] = uniformParentSelection();
+                auto [parent1, parent2] = fitnessProportionalSelection();
+                if(parent1->cosineSimilarity(*parent2) < 0.3 && count < 20) {
+                    count++;
+                    continue;
+                }
+                count = 0;
+                auto [offspring1, offspring2] = parent1->crossover(*parent2);
+                offspring1->mutate();
+                offspring2->mutate();
+                offspring1->calculateFitness();
+                offspring2->calculateFitness();
+                newPopulation.push_back(std::move(offspring1));
+                if(newPopulation.size() < individuals.size()) {
+                    newPopulation.push_back(std::move(offspring2));
+                }
+            }
+            individuals.insert(
+                individuals.end(),
+                std::make_move_iterator(newPopulation.begin()),
+                std::make_move_iterator(newPopulation.end())
+            );
+            selectNextPopulationWithoutReplacement();
+        }
+
 };
 
 void noAdaption(Population& pop, double targetFitness, int maxGenerations) {
@@ -832,6 +862,26 @@ void averageFitness(Population& pop, double targetFitness, int maxGenerations) {
 };
 
 
+void matingDistance(Population& pop, double targetFitness, int maxGenerations) {
+    for (int generation = 0; generation < maxGenerations; generation++) {
+        pop.evolveWithMatingDistance();
+        if (pop.getBestIndividual().getFitness() >= targetFitness) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            break;
+        }
+        if (generation % 1000 == 0) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+        }
+    }
+};
+
+
 
 int main(void) {
     int populationSize = 100;
@@ -853,6 +903,10 @@ int main(void) {
 
     pop = Population(populationSize, allelesLength, minAllele, maxAllele);
     similarityControl(pop, targetFitness, maxGenerations);
+
+    pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+    matingDistance(pop, targetFitness, maxGenerations);
+
     return 0;
 }
 
