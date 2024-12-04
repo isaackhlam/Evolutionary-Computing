@@ -315,7 +315,7 @@ class RealGene : public Gene {
 
         void calculateFitness() override {
             //fitness = sphereFunction();
-            fitness = 2000 - RastriginFunction();
+            fitness = 80000 - RastriginFunction();
         }
 
         double sphereFunction() {
@@ -663,8 +663,8 @@ class Population {
                 std::make_move_iterator(newPopulation.begin()),
                 std::make_move_iterator(newPopulation.end())
             );
-            //selectNextPopulationWithoutReplacement();
-            selectNextPopulationWithElitismWithoutReplacement();
+            selectNextPopulationWithoutReplacement();
+            //selectNextPopulationWithElitismWithoutReplacement();
             calculatePopulationFitnessMetrics();
         }
 
@@ -695,8 +695,8 @@ class Population {
                 std::make_move_iterator(newPopulation.begin()),
                 std::make_move_iterator(newPopulation.end())
             );
-            //selectNextPopulationWithoutReplacement();
-            selectNextPopulationWithElitismWithoutReplacement();
+            selectNextPopulationWithoutReplacement();
+            //selectNextPopulationWithElitismWithoutReplacement();
             calculatePopulationFitnessMetrics();
             return successCount;
         }
@@ -727,8 +727,8 @@ class Population {
                 std::make_move_iterator(newPopulation.begin()),
                 std::make_move_iterator(newPopulation.end())
             );
-            //selectNextPopulationWithoutReplacement();
-            selectNextPopulationWithElitismWithoutReplacement();
+            selectNextPopulationWithoutReplacement();
+            //selectNextPopulationWithElitismWithoutReplacement();
             calculatePopulationFitnessMetrics();
         }
 };
@@ -963,11 +963,11 @@ void matingDistance(Population& pop, double targetFitness, int maxGenerations) {
 };
 
 int main(void) {
-    int populationSize = 100;
-    int allelesLength = 20;
+    int populationSize = 20;
+    int allelesLength = 50;
     double minAllele = 0.0;
-    double maxAllele = 10.0;
-    double targetFitness = 1980;
+    double maxAllele = 40.0;
+    double targetFitness = 79999;
     int maxGenerations = 1e6;
     double initMutationRate = 0.05;
     int N = 10;
