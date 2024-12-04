@@ -804,7 +804,7 @@ void diversityControl(Population& pop, double targetFitness, int maxGenerations)
     }
 };
 
-void similarityControl(Population& pop, double targetFitness, int maxGenerations) {
+void similarityCompare(Population& pop, double targetFitness, int maxGenerations) {
     double previousSimilarity = pop.calculateSimilarity();
     double currentSimilarity = 0;
     int nPeriod = 20;
@@ -833,6 +833,38 @@ void similarityControl(Population& pop, double targetFitness, int maxGenerations
                 pop.scalePopulationMutationRate(1.01, 0.01, 0.9);
             }
             previousSimilarity = currentSimilarity;
+            currentSimilarity = 0;
+        }
+    }
+};
+
+void similarityControl(Population& pop, double targetFitness, int maxGenerations) {
+    double currentSimilarity = 0;
+    int nPeriod = 20;
+
+    for (int generation = 0; generation < maxGenerations; generation++) {
+        pop.evolve();
+        currentSimilarity += pop.calculateDiveristy();
+        if (pop.getBestIndividual().getFitness() >= targetFitness) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            break;
+        }
+        if (generation % 10000 == 0) {
+            std::cout << "Generation " << generation << ":\n";
+            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+        }
+        if (generation && generation % nPeriod == 0) {
+            currentSimilarity = currentSimilarity / nPeriod;
+            if (currentSimilarity > 0.8) {
+                pop.scalePopulationMutationRate(0.9, 0.01, 0.9);
+            } else if (currentSimilarity < 0.4) {
+                pop.scalePopulationMutationRate(1.0 / 0.9, 0.01, 0.9);
+            }
             currentSimilarity = 0;
         }
     }
