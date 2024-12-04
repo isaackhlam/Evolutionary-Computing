@@ -658,7 +658,13 @@ class Population {
                     newPopulation.push_back(std::move(offspring2));
                 }
             }
-            individuals = std::move(newPopulation);
+            individuals.insert(
+                individuals.end(),
+                std::make_move_iterator(newPopulation.begin()),
+                std::make_move_iterator(newPopulation.end())
+            );
+            //selectNextPopulationWithoutReplacement();
+            selectNextPopulationWithElitismWithoutReplacement();
             calculatePopulationFitnessMetrics();
         }
 
@@ -684,7 +690,13 @@ class Population {
                     newPopulation.push_back(std::move(offspring2));
                 }
             }
-            individuals = std::move(newPopulation);
+            individuals.insert(
+                individuals.end(),
+                std::make_move_iterator(newPopulation.begin()),
+                std::make_move_iterator(newPopulation.end())
+            );
+            //selectNextPopulationWithoutReplacement();
+            selectNextPopulationWithElitismWithoutReplacement();
             calculatePopulationFitnessMetrics();
             return successCount;
         }
@@ -715,7 +727,8 @@ class Population {
                 std::make_move_iterator(newPopulation.begin()),
                 std::make_move_iterator(newPopulation.end())
             );
-            selectNextPopulationWithoutReplacement();
+            //selectNextPopulationWithoutReplacement();
+            selectNextPopulationWithElitismWithoutReplacement();
             calculatePopulationFitnessMetrics();
         }
 };
