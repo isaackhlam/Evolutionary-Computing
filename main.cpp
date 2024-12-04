@@ -760,9 +760,9 @@ void oneFifthSuccessRule(Population& pop, double targetFitness, int maxGeneratio
         }
         if (generation && generation % nPeriod == 0) {
             if (successCount * 5 > nPeriod * pop.getPopulationSize()) {
-                pop.scalePopulationMutationRate(1.0 / c);
+                pop.scalePopulationMutationRate(1.0 / c, 0.01, 0.9);
             } else if (successCount * 5 < nPeriod * pop.getPopulationSize()) {
-                pop.scalePopulationMutationRate(c);
+                pop.scalePopulationMutationRate(c, 0.01, 0.9);
             }
             successCount = 0;
         }
@@ -793,9 +793,9 @@ void diversityControl(Population& pop, double targetFitness, int maxGenerations)
         if (generation && generation % nPeriod == 0) {
             currentDiversity = currentDiversity / nPeriod;
             if (currentDiversity > previousDiversity) {
-                pop.scalePopulationMutationRate(0.99);
+                pop.scalePopulationMutationRate(0.99, 0.01, 0.9);
             } else if (currentDiversity < previousDiversity) {
-                pop.scalePopulationMutationRate(1.01);
+                pop.scalePopulationMutationRate(1.01, 0.01, 0.9);
             }
             previousDiversity = currentDiversity;
             currentDiversity = 0;
@@ -826,9 +826,9 @@ void similarityControl(Population& pop, double targetFitness, int maxGenerations
         if (generation && generation % nPeriod == 0) {
             currentSimilarity = currentSimilarity / nPeriod;
             if (currentSimilarity > previousSimilarity) {
-                pop.scalePopulationMutationRate(0.99);
+                pop.scalePopulationMutationRate(0.99, 0.01, 0.9);
             } else if (currentSimilarity < previousSimilarity) {
-                pop.scalePopulationMutationRate(1.01);
+                pop.scalePopulationMutationRate(1.01, 0.01, 0.9);
             }
             previousSimilarity = currentSimilarity;
             currentSimilarity = 0;
@@ -885,9 +885,9 @@ void averageFitness(Population& pop, double targetFitness, int maxGenerations) {
         if (generation && generation % nPeriod == 0) {
             currentAverageFitness /= nPeriod;
             if (currentAverageFitness > previousAverageFitness) {
-                pop.scalePopulationMutationRate(1 / c);
+                pop.scalePopulationMutationRate(1 / c, 0.01, 0.9);
             } else if (currentAverageFitness < previousAverageFitness) {
-                pop.scalePopulationMutationRate(c);
+                pop.scalePopulationMutationRate(c, 0.01, 0.9);
             }
             previousAverageFitness = currentAverageFitness;
             currentAverageFitness = 0;
