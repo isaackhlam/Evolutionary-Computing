@@ -624,6 +624,15 @@ class Population {
             individuals = std::move(newPopulation);
         }
 
+        void selectNextPopulationWithElitismWithoutReplacement() {
+            std::vector<std::unique_ptr<Gene>> newPopulation;
+            sortPopulationWithFitness();
+            for(int i = 0; i < populationSize; i++){
+                newPopulation.push_back(std::move(individuals[i]));
+            }
+            individuals = std::move(newPopulation);
+        }
+
         void evolve() {
             std::vector<std::unique_ptr<Gene>> newPopulation;
             while (newPopulation.size() < individuals.size()) {
