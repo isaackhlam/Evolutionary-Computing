@@ -776,7 +776,8 @@ void diversityControl(Population& pop, double targetFitness, int maxGenerations)
     int nPeriod = 20;
 
     for (int generation = 0; generation < maxGenerations; generation++) {
-        currentDiversity += pop.evolveWithSuccessMutation();
+        pop.evolve();
+        currentDiversity += pop.calculateDiveristy();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
             std::cout << "Generation " << generation << ":\n";
             std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
@@ -809,7 +810,8 @@ void similarityControl(Population& pop, double targetFitness, int maxGenerations
     int nPeriod = 20;
 
     for (int generation = 0; generation < maxGenerations; generation++) {
-        currentSimilarity += pop.evolveWithSuccessMutation();
+        pop.evolve();
+        currentSimilarity += pop.calculateDiveristy();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
             std::cout << "Generation " << generation << ":\n";
             std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
