@@ -614,6 +614,15 @@ class Population {
             }
         }
 
+        void scalePopulationMutationRate(double scale, double lb, double ub) {
+            for(auto& individual : individuals) {
+                double mutationRate = individual->getMutationRate() * scale;
+                mutationRate = std::max(mutationRate, lb);
+                mutationRate = std::min(mutationRate, ub);
+                individual->setMutationRate(mutationRate);
+            }
+        }
+
         void selectNextPopulationWithoutReplacement() {
             std::vector<std::unique_ptr<Gene>> newPopulation;
             // Random Selection
