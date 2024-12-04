@@ -314,7 +314,8 @@ class RealGene : public Gene {
         }
 
         void calculateFitness() override {
-            fitness = sphereFunction();
+            //fitness = sphereFunction();
+            fitness = 2000 - RastriginFunction();
         }
 
         double sphereFunction() {
@@ -729,7 +730,7 @@ void noAdaption(Population& pop, double targetFitness, int maxGenerations) {
             std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
             break;
         }
-        if (generation % 1000 == 0) {
+        if (generation % 10000 == 0) {
             std::cout << "Generation " << generation << ":\n";
             std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
             std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
@@ -752,7 +753,7 @@ void oneFifthSuccessRule(Population& pop, double targetFitness, int maxGeneratio
             std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
             break;
         }
-        if (generation % 1000 == 0) {
+        if (generation % 10000 == 0) {
             std::cout << "Generation " << generation << ":\n";
             std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
             std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
@@ -785,7 +786,7 @@ void diversityControl(Population& pop, double targetFitness, int maxGenerations)
             std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
             break;
         }
-        if (generation % 1000 == 0) {
+        if (generation % 10000 == 0) {
             std::cout << "Generation " << generation << ":\n";
             std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
             std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
@@ -819,7 +820,7 @@ void similarityCompare(Population& pop, double targetFitness, int maxGenerations
             std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
             break;
         }
-        if (generation % 1000 == 0) {
+        if (generation % 10000 == 0) {
             std::cout << "Generation " << generation << ":\n";
             std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
             std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
@@ -883,7 +884,7 @@ void cosineAnneling(Population& pop, double targetFitness, int maxGenerations) {
             std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
             break;
         }
-        if (generation % 1000 == 0) {
+        if (generation % 10000 == 0) {
             std::cout << "Generation " << generation << ":\n";
             std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
             std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
@@ -910,7 +911,7 @@ void averageFitness(Population& pop, double targetFitness, int maxGenerations) {
             std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
             break;
         }
-        if (generation % 1000 == 0) {
+        if (generation % 10000 == 0) {
             std::cout << "Generation " << generation << ":\n";
             std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
             std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
@@ -939,7 +940,7 @@ void matingDistance(Population& pop, double targetFitness, int maxGenerations) {
             std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
             break;
         }
-        if (generation % 1000 == 0) {
+        if (generation % 10000 == 0) {
             std::cout << "Generation " << generation << ":\n";
             std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
             std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
@@ -950,28 +951,86 @@ void matingDistance(Population& pop, double targetFitness, int maxGenerations) {
 
 int main(void) {
     int populationSize = 100;
-    int allelesLength = 10;
+    int allelesLength = 20;
     double minAllele = 0.0;
     double maxAllele = 10.0;
-    double targetFitness = 800;
-    int maxGenerations = 20000;
+    double targetFitness = 1980;
+    int maxGenerations = 1e6;
+    double initMutationRate = 0.05;
+    int N = 10;
     Population pop(1, 1);
 
-    pop = Population(populationSize, allelesLength, minAllele, maxAllele);
-    noAdaption(pop, targetFitness, maxGenerations);
+    std::cout << "Standard EC\n";
+    for(int i = 0; i < N; i++) {
+        std::cout << "Run #" << i + 1 << "\n";
+        pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+        pop.setPopulationMutationRate(initMutationRate);
+        noAdaption(pop, targetFitness, maxGenerations);
+    }
+    std::cout << "\n\n";
 
-    pop = Population(populationSize, allelesLength, minAllele, maxAllele);
-    oneFifthSuccessRule(pop, targetFitness, maxGenerations);
+    std::cout << "1/5 Success Rule\n";
+    for(int i = 0; i < N; i++) {
+        std::cout << "Run #" << i + 1 << "\n";
+        pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+        pop.setPopulationMutationRate(initMutationRate);
+        oneFifthSuccessRule(pop, targetFitness, maxGenerations);
+    }
+    std::cout << "\n\n";
 
-    pop = Population(populationSize, allelesLength, minAllele, maxAllele);
-    diversityControl(pop, targetFitness, maxGenerations);
+    std::cout << "Average Pairwise Distance\n";
+    for(int i = 0; i < N; i++) {
+        std::cout << "Run #" << i + 1 << "\n";
+        pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+        pop.setPopulationMutationRate(initMutationRate);
+        diversityControl(pop, targetFitness, maxGenerations);
+    }
+    std::cout << "\n\n";
 
-    pop = Population(populationSize, allelesLength, minAllele, maxAllele);
-    similarityControl(pop, targetFitness, maxGenerations);
+    std::cout << "Cosine Similarity with Compare\n";
+    for(int i = 0; i < N; i++) {
+        std::cout << "Run #" << i + 1 << "\n";
+        pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+        pop.setPopulationMutationRate(initMutationRate);
+        similarityCompare(pop, targetFitness, maxGenerations);
+    }
+    std::cout << "\n\n";
 
-    pop = Population(populationSize, allelesLength, minAllele, maxAllele);
-    matingDistance(pop, targetFitness, maxGenerations);
+    std::cout << "Cosine Similarity with Threshold\n";
+    for(int i = 0; i < N; i++) {
+        std::cout << "Run #" << i + 1 << "\n";
+        pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+        pop.setPopulationMutationRate(initMutationRate);
+        similarityControl(pop, targetFitness, maxGenerations);
+    }
+    std::cout << "\n\n";
 
+    std::cout << "Cosine Annealing\n";
+    for(int i = 0; i < N; i++) {
+        std::cout << "Run #" << i + 1 << "\n";
+        pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+        pop.setPopulationMutationRate(initMutationRate);
+        similarityControl(pop, targetFitness, maxGenerations);
+    }
+    std::cout << "\n\n";
+
+    std::cout << "Average Fitness\n";
+    for(int i = 0; i < N; i++) {
+        std::cout << "Run #" << i + 1 << "\n";
+        pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+        pop.setPopulationMutationRate(initMutationRate);
+        averageFitness(pop, targetFitness, maxGenerations);
+    }
+    std::cout << "\n\n";
+
+    std::cout << "Mating Distance\n";
+    for(int i = 0; i < N; i++) {
+        std::cout << "Run #" << i + 1 << "\n";
+        pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+        pop.setPopulationMutationRate(initMutationRate);
+        matingDistance(pop, targetFitness, maxGenerations);
+    }
+    std::cout << "\n\n";
     return 0;
 }
 
