@@ -303,7 +303,8 @@ class RealGene : public Gene {
             std::vector<double> alleles;
             std::uniform_real_distribution<> dis(minAllele, maxAllele);
             for (int i = 0; i < n; i++) {
-                alleles.push_back(dis(gen));
+                //alleles.push_back(dis(gen));
+                alleles.push_back(maxAllele);
             }
             this->alleles = alleles;
             this->minAllele = minAllele;
@@ -773,7 +774,7 @@ void noAdaption(Population& pop, double targetFitness, int maxGenerations) {
 };
 
 void oneFifthSuccessRule(Population& pop, double targetFitness, int maxGenerations) {
-    double c = 0.85; // 0.817 <= c <= 1 is suggested
+    double c = 0.9; // 0.817 <= c <= 1 is suggested
     int successCount = 0;
     int nPeriod = 20;
 
@@ -807,6 +808,7 @@ void oneFifthSuccessRule(Population& pop, double targetFitness, int maxGeneratio
 void diversityControl(Population& pop, double targetFitness, int maxGenerations) {
     double previousDiversity = pop.calculateDiveristy();
     double currentDiversity = 0;
+    double c = 0.9; // 0.817 <= c <= 1 is suggested
     int nPeriod = 20;
 
     for (int generation = 0; generation < maxGenerations; generation++) {
@@ -828,9 +830,9 @@ void diversityControl(Population& pop, double targetFitness, int maxGenerations)
         if (generation && generation % nPeriod == 0) {
             currentDiversity = currentDiversity / nPeriod;
             if (currentDiversity > previousDiversity) {
-                pop.scalePopulationMutationRate(0.99, 0.01, 0.9);
+                pop.scalePopulationMutationRate(c, 0.01, 0.9);
             } else if (currentDiversity < previousDiversity) {
-                pop.scalePopulationMutationRate(1.01, 0.01, 0.9);
+                pop.scalePopulationMutationRate(1.0 / c, 0.01, 0.9);
             }
             previousDiversity = currentDiversity;
             currentDiversity = 0;
@@ -841,6 +843,7 @@ void diversityControl(Population& pop, double targetFitness, int maxGenerations)
 void similarityCompare(Population& pop, double targetFitness, int maxGenerations) {
     double previousSimilarity = pop.calculateSimilarity();
     double currentSimilarity = 0;
+    double c = 0.9; // 0.817 <= c <= 1 is suggested
     int nPeriod = 20;
 
     for (int generation = 0; generation < maxGenerations; generation++) {
@@ -862,9 +865,9 @@ void similarityCompare(Population& pop, double targetFitness, int maxGenerations
         if (generation && generation % nPeriod == 0) {
             currentSimilarity = currentSimilarity / nPeriod;
             if (currentSimilarity > previousSimilarity) {
-                pop.scalePopulationMutationRate(0.99, 0.01, 0.9);
+                pop.scalePopulationMutationRate(c, 0.01, 0.9);
             } else if (currentSimilarity < previousSimilarity) {
-                pop.scalePopulationMutationRate(1.01, 0.01, 0.9);
+                pop.scalePopulationMutationRate(1.0 / c, 0.01, 0.9);
             }
             previousSimilarity = currentSimilarity;
             currentSimilarity = 0;
@@ -874,6 +877,7 @@ void similarityCompare(Population& pop, double targetFitness, int maxGenerations
 
 void similarityControl(Population& pop, double targetFitness, int maxGenerations) {
     double currentSimilarity = 0;
+    double c = 0.9; // 0.817 <= c <= 1 is suggested
     int nPeriod = 20;
 
     for (int generation = 0; generation < maxGenerations; generation++) {
@@ -895,9 +899,9 @@ void similarityControl(Population& pop, double targetFitness, int maxGenerations
         if (generation && generation % nPeriod == 0) {
             currentSimilarity = currentSimilarity / nPeriod;
             if (currentSimilarity > 0.8) {
-                pop.scalePopulationMutationRate(0.9, 0.01, 0.9);
+                pop.scalePopulationMutationRate(c, 0.01, 0.9);
             } else if (currentSimilarity < 0.4) {
-                pop.scalePopulationMutationRate(1.0 / 0.9, 0.01, 0.9);
+                pop.scalePopulationMutationRate(1.0 / c, 0.01, 0.9);
             }
             currentSimilarity = 0;
         }
@@ -929,7 +933,7 @@ void cosineAnneling(Population& pop, double targetFitness, int maxGenerations) {
 };
 
 void averageFitness(Population& pop, double targetFitness, int maxGenerations) {
-    double c = 0.85; // 0.817 <= c <= 1 is suggested
+    double c = 0.9; // 0.817 <= c <= 1 is suggested
     double previousAverageFitness = pop.getAverageFitness();
     double currentAverageFitness = 0;
     int nPeriod = 20;
@@ -953,7 +957,7 @@ void averageFitness(Population& pop, double targetFitness, int maxGenerations) {
         if (generation && generation % nPeriod == 0) {
             currentAverageFitness /= nPeriod;
             if (currentAverageFitness > previousAverageFitness) {
-                pop.scalePopulationMutationRate(1 / c, 0.01, 0.9);
+                pop.scalePopulationMutationRate(1.0 / c, 0.01, 0.9);
             } else if (currentAverageFitness < previousAverageFitness) {
                 pop.scalePopulationMutationRate(c, 0.01, 0.9);
             }
@@ -988,7 +992,7 @@ int main(void) {
     int allelesLength = 50;
     double minAllele = -100.0;
     double maxAllele = 100.0;
-    double targetFitness = 5e5 - 0.1;
+    double targetFitness = 5e5 - 0.01;
     int maxGenerations = 1e6;
     double initMutationRate = 0.05;
     int N = 10;
