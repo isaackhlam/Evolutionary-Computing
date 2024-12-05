@@ -303,8 +303,8 @@ class RealGene : public Gene {
             std::vector<double> alleles;
             std::uniform_real_distribution<> dis(minAllele, maxAllele);
             for (int i = 0; i < n; i++) {
-                //alleles.push_back(dis(gen));
-                alleles.push_back(maxAllele);
+                alleles.push_back(dis(gen));
+                //alleles.push_back(maxAllele);
             }
             this->alleles = alleles;
             this->minAllele = minAllele;
@@ -316,9 +316,9 @@ class RealGene : public Gene {
         }
 
         void calculateFitness() override {
-            //fitness = sphereFunction();
+            fitness = sphereFunction();
             //fitness = 5e5 - RastriginFunction();
-            fitness = 15391539 - RosenbrockFunction();
+            //fitness = 15391539 - RosenbrockFunction();
         }
 
         double sphereFunction() {
@@ -991,10 +991,11 @@ int main(void) {
     int populationSize = 10;
     int offspringSize = 50;
     int allelesLength = 20;
-    double minAllele = -10.0;
-    double maxAllele = 10.0;
+    double minAllele = -100.0;
+    double maxAllele = 100.0;
+    double targetFitness = 2e5 - 0.01;
     //double targetFitness = 5e5 - 0.01;
-    double targetFitness = 15391539 - 5;
+    //double targetFitness = 15391539 - 5;
     int maxGenerations = 1e6;
     double initMutationRate = 0.05;
     int N = 10;
