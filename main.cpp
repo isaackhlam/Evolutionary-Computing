@@ -7,11 +7,12 @@
 #include <vector>
 #include <random>
 #include <algorithm>
+#include <string>
+#include <fstream>
 #include <iostream>
 
 std::random_device rd;
 std::mt19937 gen(rd());
-
 
 
 class Gene {
@@ -315,7 +316,7 @@ class RealGene : public Gene {
 
         void calculateFitness() override {
             //fitness = sphereFunction();
-            fitness = 80000 - RastriginFunction();
+            fitness = 5e5 - RastriginFunction();
         }
 
         double sphereFunction() {
@@ -470,7 +471,11 @@ class Population {
                 individuals.push_back(std::move(gene));
             }
             populationSize = size;
-            this->offspringSize = offspringSize;
+            if (offspringSize == -1) {
+                this->offspringSize = populationSize;
+            } else {
+                this->offspringSize = offspringSize;
+            }
             diversity = calculateDiveristy();
             populationSimilarity = calculateSimilarity();
             calculatePopulationFitnessMetrics();
@@ -482,7 +487,11 @@ class Population {
                 individuals.push_back(std::move(gene));
             }
             populationSize = size;
-            this->offspringSize = offspringSize;
+            if (offspringSize == -1) {
+                this->offspringSize = populationSize;
+            } else {
+                this->offspringSize = offspringSize;
+            }
             diversity = calculateDiveristy();
             populationSimilarity = calculateSimilarity();
             calculatePopulationFitnessMetrics();
@@ -494,7 +503,11 @@ class Population {
                 individuals.push_back(std::move(gene));
             }
             populationSize = size;
-            this->offspringSize = offspringSize;
+            if (offspringSize == -1) {
+                this->offspringSize = populationSize;
+            } else {
+                this->offspringSize = offspringSize;
+            }
             diversity = calculateDiveristy();
             populationSimilarity = calculateSimilarity();
             calculatePopulationFitnessMetrics();
@@ -645,7 +658,7 @@ class Population {
 
         void evolve() {
             std::vector<std::unique_ptr<Gene>> newPopulation;
-            while (newPopulation.size() < individuals.size()) {
+            while (newPopulation.size() < offspringSize) {
                 //auto [parent1, parent2] = uniformParentSelection();
                 auto [parent1, parent2] = fitnessProportionalSelection();
                 auto [offspring1, offspring2] = parent1->crossover(*parent2);
@@ -654,7 +667,7 @@ class Population {
                 offspring1->calculateFitness();
                 offspring2->calculateFitness();
                 newPopulation.push_back(std::move(offspring1));
-                if(newPopulation.size() < individuals.size()) {
+                if(newPopulation.size() < offspringSize) {
                     newPopulation.push_back(std::move(offspring2));
                 }
             }
@@ -663,8 +676,8 @@ class Population {
                 std::make_move_iterator(newPopulation.begin()),
                 std::make_move_iterator(newPopulation.end())
             );
-            selectNextPopulationWithoutReplacement();
-            //selectNextPopulationWithElitismWithoutReplacement();
+            //selectNextPopulationWithoutReplacement();
+            selectNextPopulationWithElitismWithoutReplacement();
             calculatePopulationFitnessMetrics();
         }
 
@@ -673,7 +686,7 @@ class Population {
             int successCount = 0;
             double fitness1;
             double fitness2;
-            while (newPopulation.size() < individuals.size()) {
+            while (newPopulation.size() < offspringSize) {
                 //auto [parent1, parent2] = uniformParentSelection();
                 auto [parent1, parent2] = fitnessProportionalSelection();
                 auto [offspring1, offspring2] = parent1->crossover(*parent2);
@@ -686,7 +699,7 @@ class Population {
                 if (offspring1->getFitness() > fitness1) successCount++;
                 if (offspring2->getFitness() > fitness2) successCount++;
                 newPopulation.push_back(std::move(offspring1));
-                if(newPopulation.size() < individuals.size()) {
+                if(newPopulation.size() < offspringSize) {
                     newPopulation.push_back(std::move(offspring2));
                 }
             }
@@ -695,8 +708,8 @@ class Population {
                 std::make_move_iterator(newPopulation.begin()),
                 std::make_move_iterator(newPopulation.end())
             );
-            selectNextPopulationWithoutReplacement();
-            //selectNextPopulationWithElitismWithoutReplacement();
+            //selectNextPopulationWithoutReplacement();
+            selectNextPopulationWithElitismWithoutReplacement();
             calculatePopulationFitnessMetrics();
             return successCount;
         }
@@ -704,7 +717,7 @@ class Population {
         void evolveWithMatingDistance() {
             std::vector<std::unique_ptr<Gene>> newPopulation;
             int count = 0;
-            while (newPopulation.size() < individuals.size()) {
+            while (newPopulation.size() < offspringSize) {
                 //auto [parent1, parent2] = uniformParentSelection();
                 auto [parent1, parent2] = fitnessProportionalSelection();
                 if(parent1->cosineSimilarity(*parent2) < 0.3 && count < 20) {
@@ -718,7 +731,7 @@ class Population {
                 offspring1->calculateFitness();
                 offspring2->calculateFitness();
                 newPopulation.push_back(std::move(offspring1));
-                if(newPopulation.size() < individuals.size()) {
+                if(newPopulation.size() < offspringSize) {
                     newPopulation.push_back(std::move(offspring2));
                 }
             }
@@ -727,11 +740,18 @@ class Population {
                 std::make_move_iterator(newPopulation.begin()),
                 std::make_move_iterator(newPopulation.end())
             );
-            selectNextPopulationWithoutReplacement();
-            //selectNextPopulationWithElitismWithoutReplacement();
+            //selectNextPopulationWithoutReplacement();
+            selectNextPopulationWithElitismWithoutReplacement();
             calculatePopulationFitnessMetrics();
         }
+
+
 };
+
+void logStep(std::ofstream &log_file, int experiment_id, int i, double best, double average) {
+    log_file << experiment_id << "," << i << "," << best << "," << average << std::endl;
+    log_file.close();
+}
 
 void noAdaption(Population& pop, double targetFitness, int maxGenerations) {
     for (int generation = 0; generation < maxGenerations; generation++) {
@@ -963,29 +983,34 @@ void matingDistance(Population& pop, double targetFitness, int maxGenerations) {
 };
 
 int main(void) {
-    int populationSize = 20;
+    int populationSize = 10;
+    int offspringSize = 50;
     int allelesLength = 50;
-    double minAllele = 0.0;
-    double maxAllele = 40.0;
-    double targetFitness = 79999;
+    double minAllele = -100.0;
+    double maxAllele = 100.0;
+    double targetFitness = 5e5 - 0.1;
     int maxGenerations = 1e6;
     double initMutationRate = 0.05;
     int N = 10;
+    //std::ofstream log_file;
     Population pop(1, 1);
 
     std::cout << "Standard EC\n";
+    //log_file.open("./log/standard_EC.csv", std::ios::app);
+    //log_file << "Experiment_ID,Iteration,Best_Value,Average_Value" << std::endl;
     for(int i = 0; i < N; i++) {
         std::cout << "Run #" << i + 1 << "\n";
-        pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+        pop = Population(populationSize, allelesLength, minAllele, maxAllele, offspringSize);
         pop.setPopulationMutationRate(initMutationRate);
         noAdaption(pop, targetFitness, maxGenerations);
     }
+    //log_file.close();
     std::cout << "\n\n";
 
     std::cout << "1/5 Success Rule\n";
     for(int i = 0; i < N; i++) {
         std::cout << "Run #" << i + 1 << "\n";
-        pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+        pop = Population(populationSize, allelesLength, minAllele, maxAllele, offspringSize);
         pop.setPopulationMutationRate(initMutationRate);
         oneFifthSuccessRule(pop, targetFitness, maxGenerations);
     }
@@ -994,7 +1019,7 @@ int main(void) {
     std::cout << "Average Pairwise Distance\n";
     for(int i = 0; i < N; i++) {
         std::cout << "Run #" << i + 1 << "\n";
-        pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+        pop = Population(populationSize, allelesLength, minAllele, maxAllele, offspringSize);
         pop.setPopulationMutationRate(initMutationRate);
         diversityControl(pop, targetFitness, maxGenerations);
     }
@@ -1003,7 +1028,7 @@ int main(void) {
     std::cout << "Cosine Similarity with Compare\n";
     for(int i = 0; i < N; i++) {
         std::cout << "Run #" << i + 1 << "\n";
-        pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+        pop = Population(populationSize, allelesLength, minAllele, maxAllele, offspringSize);
         pop.setPopulationMutationRate(initMutationRate);
         similarityCompare(pop, targetFitness, maxGenerations);
     }
@@ -1012,7 +1037,7 @@ int main(void) {
     std::cout << "Cosine Similarity with Threshold\n";
     for(int i = 0; i < N; i++) {
         std::cout << "Run #" << i + 1 << "\n";
-        pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+        pop = Population(populationSize, allelesLength, minAllele, maxAllele, offspringSize);
         pop.setPopulationMutationRate(initMutationRate);
         similarityControl(pop, targetFitness, maxGenerations);
     }
@@ -1021,7 +1046,7 @@ int main(void) {
     std::cout << "Cosine Annealing\n";
     for(int i = 0; i < N; i++) {
         std::cout << "Run #" << i + 1 << "\n";
-        pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+        pop = Population(populationSize, allelesLength, minAllele, maxAllele, offspringSize);
         pop.setPopulationMutationRate(initMutationRate);
         similarityControl(pop, targetFitness, maxGenerations);
     }
@@ -1030,7 +1055,7 @@ int main(void) {
     std::cout << "Average Fitness\n";
     for(int i = 0; i < N; i++) {
         std::cout << "Run #" << i + 1 << "\n";
-        pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+        pop = Population(populationSize, allelesLength, minAllele, maxAllele, offspringSize);
         pop.setPopulationMutationRate(initMutationRate);
         averageFitness(pop, targetFitness, maxGenerations);
     }
@@ -1039,7 +1064,7 @@ int main(void) {
     std::cout << "Mating Distance\n";
     for(int i = 0; i < N; i++) {
         std::cout << "Run #" << i + 1 << "\n";
-        pop = Population(populationSize, allelesLength, minAllele, maxAllele);
+        pop = Population(populationSize, allelesLength, minAllele, maxAllele, offspringSize);
         pop.setPopulationMutationRate(initMutationRate);
         matingDistance(pop, targetFitness, maxGenerations);
     }
