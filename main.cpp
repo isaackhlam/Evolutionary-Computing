@@ -317,7 +317,8 @@ class RealGene : public Gene {
 
         void calculateFitness() override {
             //fitness = sphereFunction();
-            fitness = 5e5 - RastriginFunction();
+            //fitness = 5e5 - RastriginFunction();
+            fitness = 15391539 - RosenbrockFunction();
         }
 
         double sphereFunction() {
@@ -989,10 +990,11 @@ void matingDistance(Population& pop, double targetFitness, int maxGenerations) {
 int main(void) {
     int populationSize = 10;
     int offspringSize = 50;
-    int allelesLength = 50;
-    double minAllele = -100.0;
-    double maxAllele = 100.0;
-    double targetFitness = 5e5 - 0.01;
+    int allelesLength = 20;
+    double minAllele = -10.0;
+    double maxAllele = 10.0;
+    //double targetFitness = 5e5 - 0.01;
+    double targetFitness = 15391539 - 5;
     int maxGenerations = 1e6;
     double initMutationRate = 0.05;
     int N = 10;
