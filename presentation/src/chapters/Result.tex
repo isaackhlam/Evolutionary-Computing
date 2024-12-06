@@ -1,0 +1,94 @@
+\section{Result}
+    
+    \frame{\sectionpage}
+    
+    \begin{frame}{Average Generations}
+        \centering
+            % \begin{tabular}{lllllllll}
+            %           & No Adoption & OneFifth & Avg Distance & Cos Comp & Cos Control & Cos Annealing & Avg Fit & Mating \\
+            % Rastrigin & 9836.5      & 10037.7  & 9634.6       & 9662.2   & 10073.5     & 9631.7        & 9676.2  & 9951.9 \\
+            %           &             &          &              &          &             &               &         &        \\
+            %           &             &          &              &          &             &               &         &       
+            % \end{tabular}
+        \begin{tabular}{l||l|l|l}
+                           & Rastrigin & Rosenbrock & Sphere \\ \hline
+        No Adoption        & 9836.5    & 325752.6   & 1455.8 \\
+        1/5 Success Rule   & 10037.7   & 292861.4   & 1592.8 \\
+        Average Distance   & 9634.6    & 289984.7   & 1555.4 \\
+        Similarity Compare & 9662.2    & 291085.4   & 1490.1 \\
+        Similarity Cutoff  & 10073.5   & 307112.0   & 1443.0 \\
+        Cosine Annealing   & 9631.7    & 276111.3   & 1586.3 \\
+        Average Fitness    & 9676.2    & 462220.5   & 1543.9 \\
+        Mating Distance    & 9951.9    & 473526.2   & 2046.8      
+        \end{tabular}
+    \end{frame}
+
+    \begin{frame}{Statistical Test}
+        We can't just eyeball to check whether these method improved. Instead, a statistical Test should be use.
+        Since the number of run is small (n = 10), we can't assume normality and the Welch's t-test\cite{10.1093/biomet/34.1-2.28} may not be accurate enough.\\
+        Mann-Whitney U Test\cite{Mann-Whitney} can be used in this case.
+        \begin{align*}
+            U_i &= R_i - \frac{n_i(n_i + 1)}{2} \\
+            U &= min(U_i) \\
+            z &= \frac{U - \mu_U}{\sigma_U},\text{ where } \mu_U = \frac{n_1n_2}{2}, \sigma_U = \sqrt{\frac{n_1n_2(n_1 + n_2 + 1}{12}}
+        \end{align*}
+        \begin{equation*}
+            N_0 : \mu_1 <= \mu_2, N_a : \mu_1 > \mu_2
+        \end{equation*}
+    \end{frame}
+
+    % \begin{frame}{Mann-Whitney U Test - p-value}
+    %     \centering
+    %     \begin{tabular}{l||l|l|l}
+    %                        & Rastrigin & Rosenbrock & Sphere \\ \hline
+    %     1/5 Success Rule   & 0.19      & 0.60       &  0.24  \\
+    %     Average Distance   & 0.60      & 0.55       &  0.37  \\
+    %     Similarity Compare & 0.60      & 0.48       &  0.70  \\
+    %     Similarity Cutoff  & 0.31      & 0.40       &  0.60  \\
+    %     Cosine Annealing   & 0.69      & 0.60       &  0.21  \\
+    %     Average Fitness    & 0.57      & 0.05       &  0.45  \\
+    %     Mating Distance    & 0.34      & 0.07       &  0.00    
+    %     \end{tabular}
+    % \end{frame}
+
+    \begin{frame}{Mann-Whitney U Test - p-value}
+        \centering
+        \begin{tabular}{l||l|l|l}
+                           & Rastrigin & Rosenbrock & Sphere \\ \hline
+        1/5 Success Rule   & 0.83      & 0.43       &  0.79  \\
+        Average Distance   & 0.43      & 0.48       &  0.66  \\
+        Similarity Compare & 0.63      & 0.55       &  0.32  \\
+        Similarity Cutoff  & 0.71      & 0.63       &  0.43  \\
+        Cosine Annealing   & 0.34      & 0.43       &  0.81  \\
+        Average Fitness    & 0.45      & 0.96       &  0.57  \\
+        Mating Distance    & 0.69      & 0.94       &  1.00    
+        \end{tabular}
+    \end{frame}
+
+    % \begin{frame}{Welch's t Test - p-value}
+    %     \centering
+    %     \begin{tabular}{l||l|l|l}
+    %                        & Rastrigin & Rosenbrock & Sphere \\ \hline
+    %     1/5 Success Rule   & 0.28      & 0.62       & 0.19   \\
+    %     Average Distance   & 0.71      & 0.65       & 0.25   \\
+    %     Similarity Compare & 0.67      & 0.63       & 0.39   \\
+    %     Similarity Cutoff  & 0.27      & 0.58       & 0.48   \\
+    %     Cosine Annealing   & 0.73      & 0.67       & 0.18   \\
+    %     Average Fitness    & 0.66      & 0.09       & 0.29   \\
+    %     Mating Distance    & 0.40      & 0.07       & 0.00
+    %     \end{tabular}
+    % \end{frame}
+
+    % \begin{frame}{Welch's t Test - p-value}
+    %     \centering
+    %     \begin{tabular}{l||l|l|l}
+    %                        & Rastrigin & Rosenbrock & Sphere \\ \hline
+    %     1/5 Success Rule   & 0.72      & 0.38       & 0.81   \\
+    %     Average Distance   & 0.29      & 0.35       & 0.74   \\
+    %     Similarity Compare & 0.66      & 0.37       & 0.61   \\
+    %     Similarity Cutoff  & 0.73      & 0.42       & 0.52   \\
+    %     Cosine Annealing   & 0.27      & 0.33       & 0.82   \\
+    %     Average Fitness    & 0.34      & 0.91       & 0.71   \\
+    %     Mating Distance    & 0.60      & 0.93       & 0.99
+    %     \end{tabular}
+    % \end{frame}

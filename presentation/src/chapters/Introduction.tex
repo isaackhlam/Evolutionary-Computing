@@ -1,0 +1,57 @@
+\section{Introduction}
+    
+    \frame{\sectionpage}
+
+    % \begin{frame}{Evolutionary algorithms}
+    %     \begin{itemize}
+    %         \item Stochastic
+    %         \item
+    %     \end{itemize}
+    % \end{frame}
+    
+    \begin{frame}{Evolutionary algorithms}
+
+        \begin{itemize}
+            \item Inspired by natural evolution and genetic principles
+            \item Involves populations of candidate solutions (individuals)
+            \item Key operations: selection, crossover, mutation
+            \item Goal: Optimize solutions for complex problems
+            \item Widely used in optimization, machine learning, and AI
+            % \item Common algorithms: Genetic Algorithms (GA), Evolution Strategies (ES)
+        \end{itemize}
+        
+    
+        % Optimization algorithm that mimics natural evolution using selection, crossover, and mutation.\\
+        % \vspace{10pt}
+        % SELECT parents;\\
+        % RECOMBINE pairs of parents;\\
+        % MUTATE the resulting offspring;\\
+        % EVALUATE new candidates;\\
+        % SELECT individuals for the next generation;\\
+    \end{frame}
+    
+    \begin{frame}{Challenges of Standard EC}
+        \begin{itemize}
+            \setlength{\itemsep}{10pt} 
+            \item \textbf{Premature Convergence}: Without adaptation, EC methods can converge too early to suboptimal solutions.
+            \item \textbf{Lack of Robustness}: Fixed parameters (e.g. mutation rates, crossover rates) may not work well across different types of problem. 
+            \item \textbf{Inefficiency}: In dynamic environments, EC can be inefficient if the same parameters are used for all generations.
+        \end{itemize}
+    \end{frame}
+    
+    \begin{frame}{Adaptive Evolutionary Computation}
+        Algorithm can modify its own parameters during the evolutionary process.\\
+        \vspace{10pt}
+        \begin{itemize}
+            \item Self-Adaptive 
+                \begin{itemize}
+                    \item Parameters encoded directly within the genotype.
+                    \item evolve alongside with candidate solutions
+                \end{itemize}
+            \item Adaptive
+                \begin{itemize}
+                    \item Controlled externally by rules or feedback from the evolution.
+                    \item 1/5 Success Rule
+                \end{itemize}
+        \end{itemize}
+    \end{frame}
