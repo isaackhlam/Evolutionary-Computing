@@ -1,0 +1,39 @@
+\section{Discussion}
+    
+    \frame{\sectionpage}
+
+    \begin{frame}{Why not significant}
+        \begin{itemize}
+            \item Rapid adjustment of the mutation rate lead to fluctuation.
+            \item The adaption scheme quickly hit the mutation rate bound, making them indifferent.
+            \item The operation and other parameters not varying may not suit these function.
+            \item The number of experiment is small so the statistical test may not reliable.
+            \item There may be potential bug or wrong implementation I didn't notice.
+        \end{itemize}
+    \end{frame}
+
+    \begin{frame}{Limitation and Future Work}
+        \begin{itemize}
+            \item Limitation
+                \begin{itemize}
+                    \item Only tested on Non-constraints problem.
+                    \item Only tested with a few parameters. (scale ratio, observe window, etc.)
+                    \item Only tested with fixed crossover and mutation operator.
+                \end{itemize}
+            \item Future Work
+                \begin{itemize}
+                    \item Test on constraint optimization problem like knapsack problem.
+                    \item Conduct a comprehensive parameter search on threshold, scale values.
+                    \item Discuss whether the extra computation worth.
+                \end{itemize}
+        \end{itemize}
+    \end{frame}
+    
+    % \begin{frame}{Quality Control}
+    %     \centering
+    %     \huge{The inverse does work}
+        
+    %     \normalsize{for appropriate functions}
+        
+    %     \tiny{and, sometimes, the Fourier Transform of a function is not in the same set as the original function, but let's forget about this since we do not know a decent theory of integration}
+    % \end{frame}

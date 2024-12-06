@@ -1,0 +1,49 @@
+\documentclass[aspectratio=43]{beamer}
+\usepackage[english]{babel}
+\input{chapters/preamble}
+\title{Adaptive Evolutionary Computation} %->->->->-> Check hyperref title <-<-<-<-<-
+\subtitle{on Numerical Optimization}
+\author[I. Lam]{Isaac Lam}
+\institute[NYCU]{
+    Institute of Data Science and Engineering%
+    \\%
+    National Yang Ming Chiao Tung University%
+} %You can change the Institution if you are from somewhere else
+\date{6-Feb, 2024}
+%\logo{\includegraphics[width= 0.2\textwidth]{images/a-logo.png}}
+
+\begin{document}
+    
+    \frame{\titlepage}
+    
+    \begin{frame}{Summary}
+        \tableofcontents
+    \end{frame}
+    
+    \input{chapters/Introduction}
+    
+    \input{chapters/RelatedWork}
+    
+    \input{chapters/Method}
+
+    \input{chapters/Result}
+
+    \input{chapters/Discussion}
+    
+    % \section*{Acknowledgments} %You can remove this if you do not want to use it
+    %     \begin{frame}{Acknowledgments}
+    %         The author is extremely thankful to Prof. Antônio F. R. T. Piza for the short, yet wonderful, conversations about this seminar.
+    %     \end{frame}
+    
+    \section*{References} %You can remove this if you do not want to use it
+        \begin{frame}[allowframebreaks]{References}
+            \printbibliography
+        \end{frame}
+
+    \section{}
+    \begin{frame}{}
+        \centering
+            \Huge\bfseries
+        \textcolor{orange}{The End}
+    \end{frame}
+\end{document}
