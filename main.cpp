@@ -755,21 +755,22 @@ void logStep(std::ofstream &log_file, int experiment_id, int i, double best, dou
     log_file.close();
 }
 
+void printResult(int generation, Population& pop) {
+    std::cout << "Generation " << generation << ":\n";
+    std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
+    std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
+    std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+}
+
 void noAdaption(Population& pop, double targetFitness, int maxGenerations) {
     for (int generation = 0; generation < maxGenerations; generation++) {
         pop.evolve();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
-            std::cout << "Generation " << generation << ":\n";
-            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
-            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
-            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            printResult(generation, pop);
             break;
         }
         if (generation % 10000 == 0) {
-            std::cout << "Generation " << generation << ":\n";
-            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
-            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
-            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            printResult(generation, pop);
         }
     }
 };
@@ -782,17 +783,11 @@ void oneFifthSuccessRule(Population& pop, double targetFitness, int maxGeneratio
     for (int generation = 0; generation < maxGenerations; generation++) {
         successCount += pop.evolveWithSuccessMutation();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
-            std::cout << "Generation " << generation << ":\n";
-            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
-            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
-            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            printResult(generation, pop);
             break;
         }
         if (generation % 10000 == 0) {
-            std::cout << "Generation " << generation << ":\n";
-            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
-            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
-            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            printResult(generation, pop);
         }
         if (generation && generation % nPeriod == 0) {
             if (successCount * 5 > nPeriod * pop.getPopulationSize()) {
@@ -816,17 +811,11 @@ void diversityControl(Population& pop, double targetFitness, int maxGenerations)
         pop.evolve();
         currentDiversity += pop.calculateDiveristy();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
-            std::cout << "Generation " << generation << ":\n";
-            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
-            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
-            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            printResult(generation, pop);
             break;
         }
         if (generation % 10000 == 0) {
-            std::cout << "Generation " << generation << ":\n";
-            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
-            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
-            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            printResult(generation, pop);
         }
         if (generation && generation % nPeriod == 0) {
             currentDiversity = currentDiversity / nPeriod;
@@ -851,17 +840,11 @@ void similarityCompare(Population& pop, double targetFitness, int maxGenerations
         pop.evolve();
         currentSimilarity += pop.calculateDiveristy();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
-            std::cout << "Generation " << generation << ":\n";
-            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
-            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
-            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            printResult(generation, pop);
             break;
         }
         if (generation % 10000 == 0) {
-            std::cout << "Generation " << generation << ":\n";
-            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
-            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
-            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            printResult(generation, pop);
         }
         if (generation && generation % nPeriod == 0) {
             currentSimilarity = currentSimilarity / nPeriod;
@@ -885,17 +868,11 @@ void similarityControl(Population& pop, double targetFitness, int maxGenerations
         pop.evolve();
         currentSimilarity += pop.calculateDiveristy();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
-            std::cout << "Generation " << generation << ":\n";
-            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
-            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
-            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            printResult(generation, pop);
             break;
         }
         if (generation % 10000 == 0) {
-            std::cout << "Generation " << generation << ":\n";
-            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
-            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
-            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            printResult(generation, pop);
         }
         if (generation && generation % nPeriod == 0) {
             currentSimilarity = currentSimilarity / nPeriod;
@@ -916,17 +893,11 @@ void cosineAnneling(Population& pop, double targetFitness, int maxGenerations) {
     for (int generation = 0; generation < maxGenerations; generation++) {
         pop.evolve();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
-            std::cout << "Generation " << generation << ":\n";
-            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
-            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
-            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            printResult(generation, pop);
             break;
         }
         if (generation % 10000 == 0) {
-            std::cout << "Generation " << generation << ":\n";
-            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
-            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
-            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            printResult(generation, pop);
         }
         etaCur = etaMin + (etaMax - etaMin) * ( 1 + std::cos(M_PI * generation / maxGenerations)) / 2;
         pop.setPopulationMutationRate(etaCur);
@@ -943,17 +914,11 @@ void averageFitness(Population& pop, double targetFitness, int maxGenerations) {
         pop.evolve();
         currentAverageFitness += pop.getAverageFitness();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
-            std::cout << "Generation " << generation << ":\n";
-            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
-            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
-            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            printResult(generation, pop);
             break;
         }
         if (generation % 10000 == 0) {
-            std::cout << "Generation " << generation << ":\n";
-            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
-            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
-            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            printResult(generation, pop);
         }
         if (generation && generation % nPeriod == 0) {
             currentAverageFitness /= nPeriod;
@@ -972,17 +937,11 @@ void matingDistance(Population& pop, double targetFitness, int maxGenerations) {
     for (int generation = 0; generation < maxGenerations; generation++) {
         pop.evolveWithMatingDistance();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
-            std::cout << "Generation " << generation << ":\n";
-            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
-            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
-            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            printResult(generation, pop);
             break;
         }
         if (generation % 10000 == 0) {
-            std::cout << "Generation " << generation << ":\n";
-            std::cout << "Best Fitness: " << pop.getBestIndividual().getFitness() << "\n";
-            std::cout << "Average Fitness: " << pop.getAverageFitness() << "\n";
-            std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
+            printResult(generation, pop);
         }
     }
 };
