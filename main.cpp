@@ -762,8 +762,9 @@ void printResult(int generation, Population& pop) {
     std::cout << "Best Individual: " << pop.getBestIndividual() << "\n\n";
 }
 
-void noAdaption(Population& pop, double targetFitness, int maxGenerations) {
-    for (int generation = 0; generation < maxGenerations; generation++) {
+int noAdaption(Population& pop, double targetFitness, int maxGenerations) {
+    int generation;
+    for (generation = 0; generation < maxGenerations; generation++) {
         pop.evolve();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
             printResult(generation, pop);
@@ -773,14 +774,16 @@ void noAdaption(Population& pop, double targetFitness, int maxGenerations) {
             printResult(generation, pop);
         }
     }
+    return generation;
 };
 
-void oneFifthSuccessRule(Population& pop, double targetFitness, int maxGenerations) {
+int oneFifthSuccessRule(Population& pop, double targetFitness, int maxGenerations) {
+    int generation;
     double c = 0.9; // 0.817 <= c <= 1 is suggested
     int successCount = 0;
     int nPeriod = 20;
 
-    for (int generation = 0; generation < maxGenerations; generation++) {
+    for (generation = 0; generation < maxGenerations; generation++) {
         successCount += pop.evolveWithSuccessMutation();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
             printResult(generation, pop);
@@ -798,16 +801,18 @@ void oneFifthSuccessRule(Population& pop, double targetFitness, int maxGeneratio
             successCount = 0;
         }
     }
+    return generation;
 };
 
 
-void diversityControl(Population& pop, double targetFitness, int maxGenerations) {
+int diversityControl(Population& pop, double targetFitness, int maxGenerations) {
+    int generation;
     double previousDiversity = pop.calculateDiveristy();
     double currentDiversity = 0;
     double c = 0.9; // 0.817 <= c <= 1 is suggested
     int nPeriod = 20;
 
-    for (int generation = 0; generation < maxGenerations; generation++) {
+    for (generation = 0; generation < maxGenerations; generation++) {
         pop.evolve();
         currentDiversity += pop.calculateDiveristy();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
@@ -828,15 +833,17 @@ void diversityControl(Population& pop, double targetFitness, int maxGenerations)
             currentDiversity = 0;
         }
     }
+    return generation;
 };
 
-void similarityCompare(Population& pop, double targetFitness, int maxGenerations) {
+int similarityCompare(Population& pop, double targetFitness, int maxGenerations) {
+    int generation;
     double previousSimilarity = pop.calculateSimilarity();
     double currentSimilarity = 0;
     double c = 0.9; // 0.817 <= c <= 1 is suggested
     int nPeriod = 20;
 
-    for (int generation = 0; generation < maxGenerations; generation++) {
+    for (generation = 0; generation < maxGenerations; generation++) {
         pop.evolve();
         currentSimilarity += pop.calculateDiveristy();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
@@ -857,14 +864,16 @@ void similarityCompare(Population& pop, double targetFitness, int maxGenerations
             currentSimilarity = 0;
         }
     }
+    return generation;
 };
 
-void similarityControl(Population& pop, double targetFitness, int maxGenerations) {
+int similarityControl(Population& pop, double targetFitness, int maxGenerations) {
+    int generation;
     double currentSimilarity = 0;
     double c = 0.9; // 0.817 <= c <= 1 is suggested
     int nPeriod = 20;
 
-    for (int generation = 0; generation < maxGenerations; generation++) {
+    for (generation = 0; generation < maxGenerations; generation++) {
         pop.evolve();
         currentSimilarity += pop.calculateDiveristy();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
@@ -884,13 +893,15 @@ void similarityControl(Population& pop, double targetFitness, int maxGenerations
             currentSimilarity = 0;
         }
     }
+    return generation;
 };
 
-void cosineAnneling(Population& pop, double targetFitness, int maxGenerations) {
+int cosineAnneling(Population& pop, double targetFitness, int maxGenerations) {
+    int generation;
     double etaMin = 0.0;
     double etaMax = 0.5;
     double etaCur = etaMax;
-    for (int generation = 0; generation < maxGenerations; generation++) {
+    for (generation = 0; generation < maxGenerations; generation++) {
         pop.evolve();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
             printResult(generation, pop);
@@ -902,15 +913,17 @@ void cosineAnneling(Population& pop, double targetFitness, int maxGenerations) {
         etaCur = etaMin + (etaMax - etaMin) * ( 1 + std::cos(M_PI * generation / maxGenerations)) / 2;
         pop.setPopulationMutationRate(etaCur);
     }
+    return generation;
 };
 
-void averageFitness(Population& pop, double targetFitness, int maxGenerations) {
+int averageFitness(Population& pop, double targetFitness, int maxGenerations) {
+    int generation;
     double c = 0.9; // 0.817 <= c <= 1 is suggested
     double previousAverageFitness = pop.getAverageFitness();
     double currentAverageFitness = 0;
     int nPeriod = 20;
 
-    for (int generation = 0; generation < maxGenerations; generation++) {
+    for (generation = 0; generation < maxGenerations; generation++) {
         pop.evolve();
         currentAverageFitness += pop.getAverageFitness();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
@@ -931,10 +944,12 @@ void averageFitness(Population& pop, double targetFitness, int maxGenerations) {
             currentAverageFitness = 0;
         }
     }
+    return generation;
 };
 
-void matingDistance(Population& pop, double targetFitness, int maxGenerations) {
-    for (int generation = 0; generation < maxGenerations; generation++) {
+int matingDistance(Population& pop, double targetFitness, int maxGenerations) {
+    int generation;
+    for (generation = 0; generation < maxGenerations; generation++) {
         pop.evolveWithMatingDistance();
         if (pop.getBestIndividual().getFitness() >= targetFitness) {
             printResult(generation, pop);
@@ -944,6 +959,7 @@ void matingDistance(Population& pop, double targetFitness, int maxGenerations) {
             printResult(generation, pop);
         }
     }
+    return generation;
 };
 
 int main(void) {
