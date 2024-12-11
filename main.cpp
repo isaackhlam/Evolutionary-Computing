@@ -19,6 +19,7 @@ class Gene {
 protected:
     double fitness;
     double mutationRate;
+    double mutationStepSize;
 public:
     virtual ~Gene() = default;
     virtual void calculateFitness() = 0;
@@ -31,8 +32,11 @@ public:
         crossover(const Gene& other) const = 0;
     double getFitness() const { return fitness; }
     void setMutationRate(double mutationRate) { this->mutationRate = mutationRate; }
+    void setMutationStepSize(double mutationStepSize) { this->mutationStepSize = mutationStepSize; }
     void scaleMutationRate(double scale) { mutationRate *= scale; }
+    void scaleMutationStepSize(double scale) { mutationStepSize *= scale; }
     double getMutationRate() const { return mutationRate; }
+    double getMutationStepSize() const { return mutationStepSize; }
 
     virtual void print(std::ostream& os) const = 0;
     friend std::ostream& operator<<(std::ostream& os, const Gene& gene) {
@@ -295,28 +299,25 @@ class RealGene : public Gene {
         std::vector<double> alleles;
         double minAllele;
         double maxAllele;
-        double lowerMutationValue;
-        double upperMutationValue;
     public:
         RealGene(int n, double minAllele, double maxAllele) { initialize(n, minAllele, maxAllele); }
-        void initialize(int n, double minAllele, double maxAllele, double lowerMutationValue = -1.0, double upperMutationValue = 1.0) {
+        void initialize(int n, double minAllele, double maxAllele, double mutationStepSize = 1) {
             std::vector<double> alleles;
             std::uniform_real_distribution<> dis(minAllele, maxAllele);
             for (int i = 0; i < n; i++) {
-                alleles.push_back(dis(gen));
-                //alleles.push_back(maxAllele);
+                //alleles.push_back(dis(gen));
+                alleles.push_back(maxAllele);
             }
             this->alleles = alleles;
             this->minAllele = minAllele;
             this->maxAllele = maxAllele;
             this->mutationRate = 0.01;
-            this->lowerMutationValue = lowerMutationValue;
-            this->upperMutationValue = upperMutationValue;
+            this->mutationStepSize = mutationStepSize;
             calculateFitness();
         }
 
         void calculateFitness() override {
-            fitness = sphereFunction();
+            fitness = 2e5 - sphereFunction();
             //fitness = 5e5 - RastriginFunction();
             //fitness = 15391539 - RosenbrockFunction();
         }
@@ -361,11 +362,11 @@ class RealGene : public Gene {
 
         void mutate() override {
             std::uniform_real_distribution<> dis(0.0, 1.0);
-            std::uniform_real_distribution<> disR(this->lowerMutationValue, this->upperMutationValue);
+            std::normal_distribution<> d(0, mutationStepSize);
             double temp;
             for (int i = 0; i < this->alleles.size(); i++) {
                 if (dis(gen) < this->mutationRate) {
-                    temp = alleles[i] += disR(gen);
+                    temp = alleles[i] += d(gen);
                     temp = std::min(temp, maxAllele);
                     temp = std::max(temp, minAllele);
                     this->alleles[i] = temp;
@@ -639,6 +640,18 @@ class Population {
             }
         }
 
+        void setPopulationMutationStepSize(double mutationStepSize) {
+            for(auto& individual : individuals) {
+                individual->setMutationStepSize(mutationStepSize);
+            }
+        }
+
+        void scalePopulationMutationStepSize(double scale) {
+            for(auto& individual : individuals) {
+                individual->scaleMutationStepSize(scale);
+            }
+        }
+
         void selectNextPopulationWithoutReplacement() {
             std::vector<std::unique_ptr<Gene>> newPopulation;
             // Random Selection
@@ -794,9 +807,11 @@ int oneFifthSuccessRule(Population& pop, double targetFitness, int maxGeneration
         }
         if (generation && generation % nPeriod == 0) {
             if (successCount * 5 > nPeriod * pop.getPopulationSize()) {
-                pop.scalePopulationMutationRate(1.0 / c, 0.01, 0.9);
+                //pop.scalePopulationMutationRate(1.0 / c, 0.01, 0.9);
+                pop.scalePopulationMutationStepSize(1.0 / c);
             } else if (successCount * 5 < nPeriod * pop.getPopulationSize()) {
-                pop.scalePopulationMutationRate(c, 0.01, 0.9);
+                //pop.scalePopulationMutationRate(c, 0.01, 0.9);
+                pop.scalePopulationMutationStepSize(1.0 / c);
             }
             successCount = 0;
         }
@@ -825,9 +840,11 @@ int diversityControl(Population& pop, double targetFitness, int maxGenerations) 
         if (generation && generation % nPeriod == 0) {
             currentDiversity = currentDiversity / nPeriod;
             if (currentDiversity > previousDiversity) {
-                pop.scalePopulationMutationRate(c, 0.01, 0.9);
+                //pop.scalePopulationMutationRate(c, 0.01, 0.9);
+                pop.scalePopulationMutationStepSize(c);
             } else if (currentDiversity < previousDiversity) {
-                pop.scalePopulationMutationRate(1.0 / c, 0.01, 0.9);
+                //pop.scalePopulationMutationRate(1.0 / c, 0.01, 0.9);
+                pop.scalePopulationMutationStepSize(1.0 / c);
             }
             previousDiversity = currentDiversity;
             currentDiversity = 0;
@@ -856,9 +873,11 @@ int similarityCompare(Population& pop, double targetFitness, int maxGenerations)
         if (generation && generation % nPeriod == 0) {
             currentSimilarity = currentSimilarity / nPeriod;
             if (currentSimilarity > previousSimilarity) {
-                pop.scalePopulationMutationRate(c, 0.01, 0.9);
+                //pop.scalePopulationMutationRate(c, 0.01, 0.9);
+                pop.scalePopulationMutationStepSize(c);
             } else if (currentSimilarity < previousSimilarity) {
-                pop.scalePopulationMutationRate(1.0 / c, 0.01, 0.9);
+                //pop.scalePopulationMutationRate(1.0 / c, 0.01, 0.9);
+                pop.scalePopulationMutationStepSize(1.0 / c);
             }
             previousSimilarity = currentSimilarity;
             currentSimilarity = 0;
@@ -886,9 +905,11 @@ int similarityControl(Population& pop, double targetFitness, int maxGenerations)
         if (generation && generation % nPeriod == 0) {
             currentSimilarity = currentSimilarity / nPeriod;
             if (currentSimilarity > 0.8) {
-                pop.scalePopulationMutationRate(c, 0.01, 0.9);
+                //pop.scalePopulationMutationRate(c, 0.01, 0.9);
+                pop.scalePopulationMutationStepSize(c);
             } else if (currentSimilarity < 0.4) {
-                pop.scalePopulationMutationRate(1.0 / c, 0.01, 0.9);
+                //pop.scalePopulationMutationRate(1.0 / c, 0.01, 0.9);
+                pop.scalePopulationMutationStepSize(1.0 / c);
             }
             currentSimilarity = 0;
         }
@@ -899,7 +920,7 @@ int similarityControl(Population& pop, double targetFitness, int maxGenerations)
 int cosineAnneling(Population& pop, double targetFitness, int maxGenerations) {
     int generation;
     double etaMin = 0.0;
-    double etaMax = 0.5;
+    double etaMax = 1.0;
     double etaCur = etaMax;
     for (generation = 0; generation < maxGenerations; generation++) {
         pop.evolve();
@@ -911,7 +932,8 @@ int cosineAnneling(Population& pop, double targetFitness, int maxGenerations) {
             printResult(generation, pop);
         }
         etaCur = etaMin + (etaMax - etaMin) * ( 1 + std::cos(M_PI * generation / maxGenerations)) / 2;
-        pop.setPopulationMutationRate(etaCur);
+        //pop.setPopulationMutationRate(etaCur);
+        pop.setPopulationMutationStepSize(etaCur);
     }
     return generation;
 };
@@ -936,9 +958,9 @@ int averageFitness(Population& pop, double targetFitness, int maxGenerations) {
         if (generation && generation % nPeriod == 0) {
             currentAverageFitness /= nPeriod;
             if (currentAverageFitness > previousAverageFitness) {
-                pop.scalePopulationMutationRate(1.0 / c, 0.01, 0.9);
-            } else if (currentAverageFitness < previousAverageFitness) {
                 pop.scalePopulationMutationRate(c, 0.01, 0.9);
+            } else if (currentAverageFitness < previousAverageFitness) {
+                pop.scalePopulationMutationRate(1.0 / c, 0.01, 0.9);
             }
             previousAverageFitness = currentAverageFitness;
             currentAverageFitness = 0;
