@@ -17,12 +17,12 @@ for subject in other_subjects:
     first_values = subject_groups[first_subject]
     second_values = subject_groups[subject]
 
-    t_stat, p_value = stats.ttest_ind(first_values, second_values, equal_var=False)
+    t_stat, p_value = stats.ttest_ind(first_values, second_values, equal_var=False, alternative='greater')
 
-    p_value_one_tailed = p_value / 2 if t_stat > 0 else 1 - (p_value / 2)
+    # p_value_one_tailed = p_value / 2 if t_stat > 0 else 1 - (p_value / 2)
     results[subject] = {
         't_statistic': t_stat,
-        'p_value': p_value_one_tailed
+        'p_value': p_value
     }
 
 # Print the results
