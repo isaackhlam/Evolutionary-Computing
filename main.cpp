@@ -794,7 +794,7 @@ int oneFifthSuccessRule(Population& pop, double targetFitness, int maxGeneration
     int generation;
     double c = 0.9; // 0.817 <= c <= 1 is suggested
     int successCount = 0;
-    int nPeriod = 20;
+    int nPeriod = 50;
 
     for (generation = 0; generation < maxGenerations; generation++) {
         successCount += pop.evolveWithSuccessMutation();
@@ -825,7 +825,7 @@ int diversityControl(Population& pop, double targetFitness, int maxGenerations) 
     double previousDiversity = pop.calculateDiveristy();
     double currentDiversity = 0;
     double c = 0.9; // 0.817 <= c <= 1 is suggested
-    int nPeriod = 20;
+    int nPeriod = 50;
 
     for (generation = 0; generation < maxGenerations; generation++) {
         pop.evolve();
@@ -858,7 +858,7 @@ int similarityCompare(Population& pop, double targetFitness, int maxGenerations)
     double previousSimilarity = pop.calculateSimilarity();
     double currentSimilarity = 0;
     double c = 0.9; // 0.817 <= c <= 1 is suggested
-    int nPeriod = 20;
+    int nPeriod = 50;
 
     for (generation = 0; generation < maxGenerations; generation++) {
         pop.evolve();
@@ -890,7 +890,7 @@ int similarityControl(Population& pop, double targetFitness, int maxGenerations)
     int generation;
     double currentSimilarity = 0;
     double c = 0.9; // 0.817 <= c <= 1 is suggested
-    int nPeriod = 20;
+    int nPeriod = 50;
 
     for (generation = 0; generation < maxGenerations; generation++) {
         pop.evolve();
@@ -943,7 +943,7 @@ int averageFitness(Population& pop, double targetFitness, int maxGenerations) {
     double c = 0.9; // 0.817 <= c <= 1 is suggested
     double previousAverageFitness = pop.getAverageFitness();
     double currentAverageFitness = 0;
-    int nPeriod = 20;
+    int nPeriod = 50;
 
     for (generation = 0; generation < maxGenerations; generation++) {
         pop.evolve();
@@ -993,22 +993,23 @@ int main(void) {
     double targetFitness = 2e5 - 0.01;
     //double targetFitness = 5e5 - 0.01;
     //double targetFitness = 15391539 - 5;
-    int maxGenerations = 1e6;
+    int maxGenerations = 1e5;
     double initMutationRate = 0.05;
     int N = 10;
-    //std::ofstream log_file;
+    int it;
+    std::ofstream log_file;
+    log_file.open("./log/result.csv", std::ios::app);
+    log_file << "Adaptive_Scheme,Experiment_ID,Iteration" << std::endl;
     Population pop(1, 1);
 
     std::cout << "Standard EC\n";
-    //log_file.open("./log/standard_EC.csv", std::ios::app);
-    //log_file << "Experiment_ID,Iteration,Best_Value,Average_Value" << std::endl;
     for(int i = 0; i < N; i++) {
         std::cout << "Run #" << i + 1 << "\n";
         pop = Population(populationSize, allelesLength, minAllele, maxAllele, offspringSize);
         pop.setPopulationMutationRate(initMutationRate);
-        noAdaption(pop, targetFitness, maxGenerations);
+        it = noAdaption(pop, targetFitness, maxGenerations);
+        log_file << "Standard," << i << "," << it << '\n';
     }
-    //log_file.close();
     std::cout << "\n\n";
 
     std::cout << "1/5 Success Rule\n";
@@ -1016,7 +1017,8 @@ int main(void) {
         std::cout << "Run #" << i + 1 << "\n";
         pop = Population(populationSize, allelesLength, minAllele, maxAllele, offspringSize);
         pop.setPopulationMutationRate(initMutationRate);
-        oneFifthSuccessRule(pop, targetFitness, maxGenerations);
+        it = oneFifthSuccessRule(pop, targetFitness, maxGenerations);
+        log_file << "OneFifth," << i << "," << it << '\n';
     }
     std::cout << "\n\n";
 
@@ -1025,7 +1027,8 @@ int main(void) {
         std::cout << "Run #" << i + 1 << "\n";
         pop = Population(populationSize, allelesLength, minAllele, maxAllele, offspringSize);
         pop.setPopulationMutationRate(initMutationRate);
-        diversityControl(pop, targetFitness, maxGenerations);
+        it = diversityControl(pop, targetFitness, maxGenerations);
+        log_file << "DiversityCompare," << i << "," << it << '\n';
     }
     std::cout << "\n\n";
 
@@ -1034,7 +1037,8 @@ int main(void) {
         std::cout << "Run #" << i + 1 << "\n";
         pop = Population(populationSize, allelesLength, minAllele, maxAllele, offspringSize);
         pop.setPopulationMutationRate(initMutationRate);
-        similarityCompare(pop, targetFitness, maxGenerations);
+        it = similarityCompare(pop, targetFitness, maxGenerations);
+        log_file << "CosineCompare," << i << "," << it << '\n';
     }
     std::cout << "\n\n";
 
@@ -1043,7 +1047,8 @@ int main(void) {
         std::cout << "Run #" << i + 1 << "\n";
         pop = Population(populationSize, allelesLength, minAllele, maxAllele, offspringSize);
         pop.setPopulationMutationRate(initMutationRate);
-        similarityControl(pop, targetFitness, maxGenerations);
+        it = similarityControl(pop, targetFitness, maxGenerations);
+        log_file << "CosineControl," << i << "," << it << '\n';
     }
     std::cout << "\n\n";
 
@@ -1052,7 +1057,8 @@ int main(void) {
         std::cout << "Run #" << i + 1 << "\n";
         pop = Population(populationSize, allelesLength, minAllele, maxAllele, offspringSize);
         pop.setPopulationMutationRate(initMutationRate);
-        similarityControl(pop, targetFitness, maxGenerations);
+        it = similarityControl(pop, targetFitness, maxGenerations);
+        log_file << "CosineAnnealing," << i << "," << it << '\n';
     }
     std::cout << "\n\n";
 
@@ -1061,7 +1067,8 @@ int main(void) {
         std::cout << "Run #" << i + 1 << "\n";
         pop = Population(populationSize, allelesLength, minAllele, maxAllele, offspringSize);
         pop.setPopulationMutationRate(initMutationRate);
-        averageFitness(pop, targetFitness, maxGenerations);
+        it = averageFitness(pop, targetFitness, maxGenerations);
+        log_file << "AverageFitness," << i << "," << it << '\n';
     }
     std::cout << "\n\n";
 
@@ -1070,7 +1077,8 @@ int main(void) {
         std::cout << "Run #" << i + 1 << "\n";
         pop = Population(populationSize, allelesLength, minAllele, maxAllele, offspringSize);
         pop.setPopulationMutationRate(initMutationRate);
-        matingDistance(pop, targetFitness, maxGenerations);
+        it = matingDistance(pop, targetFitness, maxGenerations);
+        log_file << "MatingDistance," << i << "," << it << '\n';
     }
     std::cout << "\n\n";
     return 0;
