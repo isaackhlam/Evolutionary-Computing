@@ -811,7 +811,7 @@ int oneFifthSuccessRule(Population& pop, double targetFitness, int maxGeneration
                 pop.scalePopulationMutationStepSize(1.0 / c);
             } else if (successCount * 5 < nPeriod * pop.getPopulationSize()) {
                 //pop.scalePopulationMutationRate(c, 0.01, 0.9);
-                pop.scalePopulationMutationStepSize(1.0 / c);
+                pop.scalePopulationMutationStepSize(c);
             }
             successCount = 0;
         }
@@ -872,12 +872,14 @@ int similarityCompare(Population& pop, double targetFitness, int maxGenerations)
         }
         if (generation && generation % nPeriod == 0) {
             currentSimilarity = currentSimilarity / nPeriod;
+            // Higher mean less diverse
+            // Increase the step size..
             if (currentSimilarity > previousSimilarity) {
                 //pop.scalePopulationMutationRate(c, 0.01, 0.9);
-                pop.scalePopulationMutationStepSize(c);
+                pop.scalePopulationMutationStepSize(1.0 / c);
             } else if (currentSimilarity < previousSimilarity) {
                 //pop.scalePopulationMutationRate(1.0 / c, 0.01, 0.9);
-                pop.scalePopulationMutationStepSize(1.0 / c);
+                pop.scalePopulationMutationStepSize(c);
             }
             previousSimilarity = currentSimilarity;
             currentSimilarity = 0;
@@ -904,12 +906,14 @@ int similarityControl(Population& pop, double targetFitness, int maxGenerations)
         }
         if (generation && generation % nPeriod == 0) {
             currentSimilarity = currentSimilarity / nPeriod;
-            if (currentSimilarity > 0.8) {
+            // Higher mean less diverse
+            // Increase the step size..
+            if (currentSimilarity > 0.7) {
                 //pop.scalePopulationMutationRate(c, 0.01, 0.9);
-                pop.scalePopulationMutationStepSize(c);
+                pop.scalePopulationMutationStepSize(1.0 / c);
             } else if (currentSimilarity < 0.4) {
                 //pop.scalePopulationMutationRate(1.0 / c, 0.01, 0.9);
-                pop.scalePopulationMutationStepSize(1.0 / c);
+                pop.scalePopulationMutationStepSize(c);
             }
             currentSimilarity = 0;
         }
