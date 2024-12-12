@@ -319,7 +319,8 @@ class RealGene : public Gene {
         void calculateFitness() override {
             //fitness = 2e5 - sphereFunction();
             //fitness = 5e5 - RastriginFunction();
-            fitness = 4035.4 - RastriginFunction();
+            //fitness = 4035.4 - RastriginFunction();
+            fitness = 400629.2 - RosenbrockFunction();
             //fitness = 15391539 - RosenbrockFunction();
         }
 
@@ -992,7 +993,7 @@ int matingDistance(Population& pop, double targetFitness, int maxGenerations) {
 int main(void) {
     int populationSize = 10;
     int offspringSize = 50;
-    int allelesLength = 100;
+    int allelesLength = 10;
     //int allelesLength = 20;
     double minAllele = -5.12;
     double maxAllele = 5.12;
@@ -1000,10 +1001,11 @@ int main(void) {
     //double maxAllele = 100;
     //double targetFitness = 2e5 - 0.01;
     //double targetFitness = 5e5 - 0.01;
-    double targetFitness = 4035.4 - 0.1;
+    //double targetFitness = 4035.4 - 0.1;
+    double targetFitness = 400629.2 - 1.86;
     //double targetFitness = 15391539 - 5;
     int maxGenerations = 1e5;
-    double initMutationRate = 0.01;
+    double initMutationRate = 0.1;
     int N = 100;
     int it;
     std::ofstream log_file;
